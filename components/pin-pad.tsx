@@ -120,7 +120,12 @@ export function PinPad({
 
     if (value === "biometric") {
       if (!showBiometric) {
-        return <View key={key} style={styles.button} />;
+        return (
+          <View
+            key={key}
+            style={[styles.button, { opacity: 0, borderWidth: 0 }]}
+          />
+        );
       }
       return (
         <TouchableOpacity

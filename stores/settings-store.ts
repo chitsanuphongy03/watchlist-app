@@ -32,12 +32,12 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   notificationSettings: {
-    enabled: true,
-    nextItemEnabled: true,
+    enabled: false,
+    nextItemEnabled: false,
     reminderEnabled: false,
     reminderTime: "20:00",
     reminderFrequency: "daily",
-    inactivityEnabled: true,
+    inactivityEnabled: false,
     inactivityDays: 3,
   },
   isLoading: true,

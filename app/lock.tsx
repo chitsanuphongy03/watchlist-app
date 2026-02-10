@@ -25,7 +25,8 @@ export default function LockScreen() {
     isBiometricAvailable,
   } = useAuthStore();
 
-  const showBiometric = isBiometricAvailable && isBiometricEnabled;
+  // Show button if hardware is available (allow manual trigger)
+  const showBiometricButton = isBiometricAvailable;
 
   const handleBiometric = useCallback(async () => {
     const success = await authenticateWithBiometric();
@@ -34,12 +35,12 @@ export default function LockScreen() {
     }
   }, [authenticateWithBiometric]);
 
-  // Try biometric on mount
+  // Try biometric on mount ONLY if enabled in settings
   useEffect(() => {
-    if (showBiometric) {
+    if (isBiometricAvailable && isBiometricEnabled) {
       handleBiometric();
     }
-  }, [showBiometric, handleBiometric]);
+  }, [isBiometricAvailable, isBiometricEnabled, handleBiometric]);
 
   const handlePinChange = useCallback(
     async (newPin: string) => {
@@ -79,7 +80,7 @@ export default function LockScreen() {
             pin={pin}
             onPinChange={handlePinChange}
             onBiometric={handleBiometric}
-            showBiometric={showBiometric}
+            showBiometric={showBiometricButton}
             error={error}
           />
         </View>

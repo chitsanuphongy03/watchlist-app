@@ -27,12 +27,12 @@ export async function saveWatchlist(items: WatchlistItem[]): Promise<void> {
 }
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
-  enabled: true,
-  nextItemEnabled: true,
+  enabled: false,
+  nextItemEnabled: false,
   reminderEnabled: false,
   reminderTime: "20:00",
   reminderFrequency: "daily",
-  inactivityEnabled: true,
+  inactivityEnabled: false,
   inactivityDays: 3,
 };
 

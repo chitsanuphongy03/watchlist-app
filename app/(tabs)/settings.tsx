@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useCallback, useEffect } from "react";
 import {
     Alert,
@@ -29,7 +30,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
-  const { isBiometricEnabled, toggleBiometric, changePin } = useAuthStore();
+  const { isBiometricEnabled, toggleBiometric } = useAuthStore();
 
   const {
     notificationSettings,
@@ -136,40 +137,8 @@ export default function SettingsScreen() {
   // ========================
 
   const handleChangePin = useCallback(() => {
-    Alert.prompt?.(
-      "เปลี่ยน PIN",
-      "ใส่ PIN เดิม",
-      async (oldPin: string) => {
-        Alert.prompt?.(
-          "PIN ใหม่",
-          "ใส่ PIN ใหม่ 6 หลัก",
-          async (newPin: string) => {
-            if (newPin.length !== 6 || !/^\d{6}$/.test(newPin)) {
-              Alert.alert("ผิดพลาด", "PIN ต้องเป็นตัวเลข 6 หลัก");
-              return;
-            }
-            const success = await changePin(oldPin, newPin);
-            if (success) {
-              Alert.alert("สำเร็จ ✅", "เปลี่ยน PIN เรียบร้อย");
-            } else {
-              Alert.alert("ผิดพลาด", "PIN เดิมไม่ถูกต้อง");
-            }
-          },
-          "secure-text",
-        );
-      },
-      "secure-text",
-    );
-
-    // Fallback for Android (no Alert.prompt)
-    if (Platform.OS === "android") {
-      Alert.alert(
-        "เปลี่ยน PIN",
-        "ฟีเจอร์นี้กำลังพัฒนาสำหรับ Android\nในขณะนี้ใช้ได้เฉพาะ iOS",
-        [{ text: "ตกลง" }],
-      );
-    }
-  }, [changePin]);
+    router.push("/change-pin");
+  }, []);
 
   // ========================
   // Notification Toggle
