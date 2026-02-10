@@ -57,9 +57,11 @@ A premium, design-focused mobile application for tracking your favorite entertai
    ```
 
 3. **Configure API Keys**
-   - Open `constants/api.ts`.
-   - Replace the `TMDB_API_KEY` with your own key from [TMDB Settings](https://www.themoviedb.org/settings/api).
-   - _(Optional)_ You can also use a `.env` file if you prefer, but the current setup reads from constants or `process.env`.
+   - Open `constants/api.ts` or create a `.env` file.
+   - You can copy `.env.example` to `.env` and fill in your key:
+     ```bash
+     cp .env.example .env
+     ```
 
 4. **Run the app**
 
