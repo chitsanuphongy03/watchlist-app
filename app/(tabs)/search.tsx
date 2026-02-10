@@ -29,6 +29,59 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// ── SearchHeader Component ──────────────────────────────
+
+interface SearchHeaderProps {
+  query: string;
+  activeFilter: ContentFilter;
+  hasSearched: boolean;
+  resultsLength: number;
+  onQueryChange: (text: string) => void;
+  onClear: () => void;
+  onFilterChange: (filter: ContentFilter) => void;
+}
+
+const SearchHeader = React.memo(
+  ({
+    query,
+    activeFilter,
+    hasSearched,
+    resultsLength,
+    onQueryChange,
+    onClear,
+    onFilterChange,
+  }: SearchHeaderProps) => {
+    return (
+      <View style={styles.headerContainer}>
+        {/* Search Bar */}
+        <View style={styles.searchBarContainer}>
+          <SearchBar
+            value={query}
+            onChangeText={onQueryChange}
+            onClear={onClear}
+          />
+        </View>
+
+        {/* Type Filter */}
+        <TypeFilter
+          activeFilter={activeFilter}
+          onFilterChange={onFilterChange}
+        />
+
+        {/* Results count */}
+        {hasSearched && resultsLength > 0 && (
+          <View style={styles.resultsHeader}>
+            <Text style={styles.resultsCount}>พบ {resultsLength} รายการ</Text>
+          </View>
+        )}
+      </View>
+    );
+  },
+);
+SearchHeader.displayName = "SearchHeader";
+
+// ── SearchScreen Component ──────────────────────────────
+
 export default function SearchScreen() {
   const {
     query,
@@ -154,43 +207,6 @@ export default function SearchScreen() {
     );
   }, [hasSearched, results.length, handleAddCustom]);
 
-  const renderHeader = useCallback(
-    () => (
-      <View style={styles.headerContainer}>
-        {/* Search Bar */}
-        <View style={styles.searchBarContainer}>
-          <SearchBar
-            value={query}
-            onChangeText={handleQueryChange}
-            onClear={handleClear}
-          />
-        </View>
-
-        {/* Type Filter */}
-        <TypeFilter
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-        />
-
-        {/* Results count */}
-        {hasSearched && results.length > 0 && (
-          <View style={styles.resultsHeader}>
-            <Text style={styles.resultsCount}>พบ {results.length} รายการ</Text>
-          </View>
-        )}
-      </View>
-    ),
-    [
-      query,
-      activeFilter,
-      hasSearched,
-      results.length,
-      handleQueryChange,
-      handleClear,
-      handleFilterChange,
-    ],
-  );
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.titleContainer}>
@@ -201,7 +217,17 @@ export default function SearchScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         extraData={items}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={
+          <SearchHeader
+            query={query}
+            activeFilter={activeFilter}
+            hasSearched={hasSearched}
+            resultsLength={results.length}
+            onQueryChange={handleQueryChange}
+            onClear={handleClear}
+            onFilterChange={handleFilterChange}
+          />
+        }
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
         contentContainerStyle={[
@@ -210,6 +236,7 @@ export default function SearchScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={false}
       />
 
       {/* FAB - Add Custom Item */}
