@@ -46,7 +46,7 @@ A premium, design-focused mobile application for tracking your favorite entertai
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/watchlist-app.git
+   git clone https://github.com/chitsanuphongy03/watchlist-app.git
    cd watchlist-app
    ```
 
