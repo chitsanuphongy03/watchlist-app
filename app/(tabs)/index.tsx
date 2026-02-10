@@ -184,7 +184,7 @@ function SwipeableCard({
           overshootLeft={false}
           overshootRight={false}
           friction={1.5}
-          activeOffsetX={[-20, 20]} // Allow small x-movement for vertical scrolling
+          activeOffsetX={[-10, 10]} // Reduced threshold for easier horizontal swipe
         >
           <WatchlistCard
             item={item}
