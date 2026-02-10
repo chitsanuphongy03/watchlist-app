@@ -2,6 +2,8 @@
 
 # dependencies
 node_modules/
+.pnp
+.pnp.js
 
 # Expo
 .expo/
@@ -30,14 +32,32 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
 # local env files
+.env
 .env*.local
+*.env
 
 # typescript
 *.tsbuildinfo
 
-app-example
+# Application specific
+app-example/
 
 # generated native folders
-/ios
-/android
+/ios/
+/android/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Credentials
+google-services.json
+GoogleService-Info.plist

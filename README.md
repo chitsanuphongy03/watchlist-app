@@ -1,50 +1,86 @@
-# Welcome to your Expo app 👋
+# 🎬 Watchlist App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A premium, design-focused mobile application for tracking your favorite entertainments. Organize Movies, Anime, Series, and Tokusatsu in one beautiful place. Built with **React Native (Expo)** and **TypeScript**.
 
-## Get started
+## ✨ Features
 
-1. Install dependencies
+- **🔐 Secure Authentication**: Protect your list with a 6-digit PIN and Biometric Authentication (FaceID/TouchID).
+- **🌍 Universal Search**: Real-time search across **TMDB** (Movies, Series, Tokusatsu) and **Jikan** (Anime) APIs.
+- **📋 Smart Watchlist**:
+  - Drag & drop ranking system.
+  - Status tracking (Not Watched, Watching, Watched).
+  - "Next Up" highlight card for your top-priority item.
+- **✨ Custom Items**: Add your own content if it's not found in the databases.
+- **🔔 Smart Notifications**:
+  - Reminders to watch content.
+  - "Inactivity" alerts if you haven't watched anything in a while.
+  - Auto-suggestion for the next item when you finish one.
+- **🎨 Premium Design**:
+  - Dark Red-Magenta aesthetic with gradients and blur effects.
+  - Smooth animations using `react-native-reanimated`.
+  - Haptic feedback and intuitive gestures.
+
+## 🛠️ Tech Stack
+
+- **Framework**: [React Native](https://reactnative.dev/) with [Expo SDK 54](https://expo.dev/)
+- **Language**: TypeScript
+- **Navigation**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Storage**:
+  - `AsyncStorage` (Data persistence)
+  - `Expo SecureStore` (Sensitive keys/PINs)
+- **Animations**: `react-native-reanimated`, `moti`
+- **APIs**:
+  - [The Movie Database (TMDB)](https://www.themoviedb.org/)
+  - [Jikan (MyAnimeList)](https://jikan.moe/)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (LTS recommended)
+- [Expo Go](https://expo.dev/go) app on your mobile device (iOS/Android) or an emulator.
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/yourusername/watchlist-app.git
+   cd watchlist-app
+   ```
+
+2. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Configure API Keys**
+   - Open `constants/api.ts`.
+   - Replace the `TMDB_API_KEY` with your own key from [TMDB Settings](https://www.themoviedb.org/settings/api).
+   - _(Optional)_ You can also use a `.env` file if you prefer, but the current setup reads from constants or `process.env`.
+
+4. **Run the app**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+5. **Scan & Play**
+   - Scan the QR code with the **Expo Go** app (Android) or Camera app (iOS).
+   - To test **Biometrics** and **Notifications**, you will need to create a **Development Build** as these features are limited in Expo Go.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📱 Screenshots
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+|   Home & Ranking   |  Search & Filter   |  Details & Status  |
+| :----------------: | :----------------: | :----------------: |
+| _(Add Screenshot)_ | _(Add Screenshot)_ | _(Add Screenshot)_ |
 
-## Get a fresh project
+## 🤝 Contributing
 
-When you're ready, run:
+Contributions are welcome! Feel free to open issues or submit pull requests to improve the app.
 
-```bash
-npm run reset-project
-```
+## 📄 License
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This project is licensed under the MIT License.
