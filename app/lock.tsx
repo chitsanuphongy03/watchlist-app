@@ -25,7 +25,6 @@ export default function LockScreen() {
     isBiometricAvailable,
   } = useAuthStore();
 
-  // Show button if hardware is available (allow manual trigger)
   const showBiometricButton = isBiometricAvailable;
 
   const handleBiometric = useCallback(async () => {
@@ -35,7 +34,6 @@ export default function LockScreen() {
     }
   }, [authenticateWithBiometric]);
 
-  // Try biometric on mount ONLY if enabled in settings
   useEffect(() => {
     if (isBiometricAvailable && isBiometricEnabled) {
       handleBiometric();
@@ -67,7 +65,6 @@ export default function LockScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
-        {/* App Icon */}
         <View style={styles.iconContainer}>
           <Ionicons name="film" size={48} color={Accent.primary} />
         </View>

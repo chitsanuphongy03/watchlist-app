@@ -17,7 +17,6 @@ interface SettingsState {
   isLoading: boolean;
   permissionGranted: boolean;
 
-  // Actions
   initialize: () => Promise<void>;
   requestNotificationPermission: () => Promise<boolean>;
   toggleNotifications: (enabled: boolean) => Promise<void>;

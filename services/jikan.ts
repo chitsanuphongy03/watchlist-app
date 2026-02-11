@@ -1,8 +1,3 @@
-/**
- * Jikan API Service (MyAnimeList Unofficial)
- * Used for Anime searches
- */
-
 import { JIKAN_BASE_URL, JIKAN_RATE_LIMIT_MS } from "@/constants/api";
 import type {
     JikanAnimeResult,
@@ -46,10 +41,6 @@ function mapJikanToSearchResult(item: JikanAnimeResult): SearchResult {
   };
 }
 
-// ========================
-// Search Anime
-// ========================
-
 export async function searchAnime(query: string): Promise<SearchResult[]> {
   try {
     const encoded = encodeURIComponent(query);
@@ -65,10 +56,6 @@ export async function searchAnime(query: string): Promise<SearchResult[]> {
     return [];
   }
 }
-
-// ========================
-// Get Anime Details
-// ========================
 
 export async function getAnimeDetails(
   malId: string,

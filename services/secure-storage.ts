@@ -1,18 +1,9 @@
-/**
- * Secure Storage service for PIN and sensitive data
- * Uses expo-secure-store (Keychain on iOS, EncryptedSharedPreferences on Android)
- */
-
 import * as SecureStore from "expo-secure-store";
 
 const KEYS = {
   PIN: "watchlist_pin",
   PIN_SET: "watchlist_pin_set",
 } as const;
-
-// ========================
-// PIN Management
-// ========================
 
 export async function savePin(pin: string): Promise<void> {
   try {

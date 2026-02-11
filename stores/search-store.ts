@@ -1,8 +1,8 @@
 import { searchAnime } from "@/services/jikan";
 import {
-    searchMovies,
-    searchSeries,
-    searchAll as tmdbSearchAll,
+  searchMovies,
+  searchSeries,
+  searchAll as tmdbSearchAll,
 } from "@/services/tmdb";
 import type { ContentFilter, SearchResult } from "@/types";
 import { create } from "zustand";
@@ -14,7 +14,6 @@ interface SearchState {
   activeFilter: ContentFilter;
   hasSearched: boolean;
 
-  // Actions
   setQuery: (query: string) => void;
   setActiveFilter: (filter: ContentFilter) => void;
   searchAll: (query: string) => Promise<void>;
@@ -65,7 +64,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           break;
         case "all":
         default: {
-          // Search both TMDB and Jikan in parallel
           const [tmdbResults, animeResults] = await Promise.all([
             tmdbSearchAll(query),
             searchAnime(query),
@@ -75,7 +73,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         }
       }
 
-      // Deduplicate by title (case-insensitive)
       const seen = new Set<string>();
       const deduped = results.filter((item) => {
         const key = item.title.toLowerCase();

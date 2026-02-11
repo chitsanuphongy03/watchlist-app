@@ -1,12 +1,12 @@
 import {
-    Accent,
-    Colors,
-    ContentTypeLabel,
-    FontFamily,
-    FontSize,
-    Radius,
-    Shadow,
-    Spacing,
+  Accent,
+  Colors,
+  ContentTypeLabel,
+  FontFamily,
+  FontSize,
+  Radius,
+  Shadow,
+  Spacing,
 } from "@/constants/theme";
 import type { WatchlistItem } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,7 +27,6 @@ export function NextUpCard({ item, onPress }: NextUpCardProps) {
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Background with Blur */}
       {item.posterUrl && (
         <Image
           source={{ uri: item.posterUrl }}
@@ -43,7 +42,6 @@ export function NextUpCard({ item, onPress }: NextUpCardProps) {
 
       <View style={styles.content}>
         <View style={styles.body}>
-          {/* Main Poster */}
           <View style={styles.posterContainer}>
             {item.posterUrl ? (
               <Image
@@ -63,12 +61,11 @@ export function NextUpCard({ item, onPress }: NextUpCardProps) {
             )}
           </View>
 
-          {/* Info */}
           <View style={styles.info}>
             <View style={styles.badgeRow}>
               <View style={styles.badge}>
                 <Ionicons name="play" size={12} color="#FFF" />
-                <Text style={styles.badgeText}>กำลังดู</Text>
+                <Text style={styles.badgeText}>ช่วงนี้กำลังดู</Text>
               </View>
               <Text style={styles.rank}>#{item.rank}</Text>
             </View>

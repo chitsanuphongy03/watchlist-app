@@ -38,7 +38,6 @@ export const useUIStore = create<UIState>((set) => ({
 
   showToast: (config) => {
     set({ toast: config });
-    // Auto hide toast
     setTimeout(() => {
       set((state) =>
         state.toast?.message === config.message ? { toast: null } : state,

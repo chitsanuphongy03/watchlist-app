@@ -47,14 +47,11 @@ export function WatchlistCard({
         item.status === "watched" && styles.containerWatched,
       ]}
       onPress={onPress}
-      // Note: Drag is now handled by the menu icon only
       disabled={disabled}
       activeOpacity={0.7}
     >
-      {/* Rank Number - Modern Style */}
       {!hideRank && <AnimatedRank rank={item.rank} />}
 
-      {/* Poster */}
       <View style={styles.posterContainer}>
         {item.posterUrl ? (
           <Image
@@ -74,7 +71,6 @@ export function WatchlistCard({
         )}
       </View>
 
-      {/* Info */}
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={1}>
           {item.title}
@@ -86,11 +82,9 @@ export function WatchlistCard({
           {item.year && <Text style={styles.metaText}> • {item.year}</Text>}
         </View>
 
-        {/* Status indicator */}
         <StatusBadge status={item.status} />
       </View>
 
-      {/* Drag Handle */}
       {!hideActions && (
         <TouchableOpacity
           onLongPress={onLongPress}
@@ -116,14 +110,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: Spacing.md,
-    backgroundColor: "#1C1C1E", // Lighter dark gray (softer)
-    borderRadius: Radius.lg, // Rounded corners
-    marginBottom: Spacing.sm, // Spacing between cards
-    marginHorizontal: Spacing.md, // Inset from screen edges (optional, looks nice)
+    backgroundColor: "#1C1C1E",
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.sm,
+    marginHorizontal: Spacing.md,
   },
-  containerWatched: {
-    // No opacity reduction for watched items
-  },
+  containerWatched: {},
   posterContainer: {
     width: 60,
     height: 90,

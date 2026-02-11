@@ -50,14 +50,12 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
     try {
       const items = await getWatchlist();
 
-      // Auto-heal: Normalize ranks for unwatched items
       const activeItems = items
         .filter((i) => i.status !== "watched")
         .sort((a, b) => a.rank - b.rank);
 
       const watchedItems = items.filter((i) => i.status === "watched");
 
-      // Apply new ranks 1..N
       const normalizedActive = activeItems.map((item, index) => ({
         ...item,
         rank: index + 1,
@@ -65,7 +63,6 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
       const normalizedItems = [...normalizedActive, ...watchedItems];
 
-      // If ranks changed, save
       if (JSON.stringify(items) !== JSON.stringify(normalizedItems)) {
         await saveWatchlist(normalizedItems);
       }
@@ -123,15 +120,25 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
   removeItem: async (id: string) => {
     const { items } = get();
-    const filtered = items.filter((item) => item.id !== id);
-    // Re-rank remaining items
-    const reranked = filtered.map((item, index) => ({
+    const remaining = items.filter((item) => item.id !== id);
+
+    // Split into active and watched
+    const active = remaining
+      .filter((i) => i.status !== "watched")
+      .sort((a, b) => a.rank - b.rank);
+    const watched = remaining.filter((i) => i.status === "watched");
+
+    // Re-rank only active items
+    const reRankedActive = active.map((item, index) => ({
       ...item,
       rank: index + 1,
-      updatedAt: Date.now(),
+      updatedAt: item.updatedAt,
     }));
-    set({ items: reranked });
-    await saveWatchlist(reranked);
+
+    // Combine
+    const finalItems = [...reRankedActive, ...watched];
+    set({ items: finalItems });
+    await saveWatchlist(finalItems);
   },
 
   updateStatus: async (id: string, status: WatchStatus) => {
@@ -183,52 +190,77 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
     await saveWatchlist(updated);
   },
 
-  reorder: async (reorderedItems: WatchlistItem[]) => {
-    const reranked = reorderedItems.map((item, index) => ({
+  reorder: async (reorderedActiveItems: WatchlistItem[]) => {
+    const { items } = get();
+    const watched = items.filter((i) => i.status === "watched");
+
+    // Note: reorderedActiveItems only contains the items passed to DraggableFlatList (active items)
+
+    const reRankedActive = reorderedActiveItems.map((item, index) => ({
       ...item,
       rank: index + 1,
       updatedAt: Date.now(),
     }));
-    set({ items: reranked });
-    await saveWatchlist(reranked);
+
+    const finalItems = [...reRankedActive, ...watched];
+    set({ items: finalItems });
+    await saveWatchlist(finalItems);
   },
 
   moveUp: async (id: string) => {
     const { items } = get();
-    const index = items.findIndex((item) => item.id === id);
+    // Split
+    const active = items
+      .filter((i) => i.status !== "watched")
+      .sort((a, b) => a.rank - b.rank);
+    const watched = items.filter((i) => i.status === "watched");
+
+    const index = active.findIndex((item) => item.id === id);
     if (index <= 0) return;
 
-    const newItems = [...items];
-    [newItems[index - 1], newItems[index]] = [
-      newItems[index],
-      newItems[index - 1],
+    const newActive = [...active];
+    [newActive[index - 1], newActive[index]] = [
+      newActive[index],
+      newActive[index - 1],
     ];
-    const reranked = newItems.map((item, i) => ({
+
+    const reRankedActive = newActive.map((item, i) => ({
       ...item,
       rank: i + 1,
       updatedAt: Date.now(),
     }));
-    set({ items: reranked });
-    await saveWatchlist(reranked);
+
+    const finalItems = [...reRankedActive, ...watched];
+    set({ items: finalItems });
+    await saveWatchlist(finalItems);
   },
 
   moveDown: async (id: string) => {
     const { items } = get();
-    const index = items.findIndex((item) => item.id === id);
-    if (index === -1 || index >= items.length - 1) return;
+    // Split
+    const active = items
+      .filter((i) => i.status !== "watched")
+      .sort((a, b) => a.rank - b.rank);
+    const watched = items.filter((i) => i.status === "watched");
 
-    const newItems = [...items];
-    [newItems[index], newItems[index + 1]] = [
-      newItems[index + 1],
-      newItems[index],
+    const index = active.findIndex((item) => item.id === id);
+    if (index === -1 || index >= active.length - 1) return;
+
+    const newActive = [...active];
+    [newActive[index], newActive[index + 1]] = [
+      newActive[index + 1],
+      newActive[index],
     ];
-    const reranked = newItems.map((item, i) => ({
+
+    const reRankedActive = newActive.map((item, i) => ({
       ...item,
       rank: i + 1,
       updatedAt: Date.now(),
     }));
-    set({ items: reranked });
-    await saveWatchlist(reranked);
+
+    const finalItems = [...reRankedActive, ...watched];
+    set({ items: finalItems });
+    await saveWatchlist(finalItems);
   },
 
   setContentFilter: (filter: ContentFilter) => set({ contentFilter: filter }),

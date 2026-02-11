@@ -2,11 +2,11 @@ import { Accent, Colors, FontFamily } from "@/constants/theme";
 import React, { useEffect } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {
-    interpolateColor,
-    useAnimatedStyle,
-    useSharedValue,
-    withSequence,
-    withTiming,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
 
 interface AnimatedRankProps {
@@ -16,15 +16,13 @@ interface AnimatedRankProps {
 export function AnimatedRank({ rank }: AnimatedRankProps) {
   const highlight = useSharedValue(0);
 
-  // Trigger smooth highlight & scale only if rank settles
   useEffect(() => {
-    highlight.value = 0; // Reset
+    highlight.value = 0;
 
     const timeout = setTimeout(() => {
-      // Gentle Pulse: Highlight (0 -> 1 -> 0)
       highlight.value = withSequence(
-        withTiming(1, { duration: 200 }), // Flash & Scale Up slightly
-        withTiming(0, { duration: 500 }), // Fade & Scale Down slowly
+        withTiming(1, { duration: 200 }),
+        withTiming(0, { duration: 500 }),
       );
     }, 400);
 
@@ -35,15 +33,11 @@ export function AnimatedRank({ rank }: AnimatedRankProps) {
     const color = interpolateColor(
       highlight.value,
       [0, 1],
-      [Accent.primary, Colors.dark.text], // Standard -> Highlight White/Text
+      [Colors.dark.text, Accent.primary],
     );
-
-    // Subtle scale: 1 -> 1.15
-    const scale = 1 + highlight.value * 0.15;
 
     return {
       color,
-      transform: [{ scale }],
     };
   });
 
@@ -56,10 +50,9 @@ export function AnimatedRank({ rank }: AnimatedRankProps) {
 
 const styles = StyleSheet.create({
   rankText: {
-    fontSize: 30, // Bigger!
+    fontSize: 30,
     fontFamily: FontFamily.heavy,
-    width: 50, // Wider for 3 digits
+    width: 50,
     textAlign: "center",
-    // color handled by animated style
   },
 });

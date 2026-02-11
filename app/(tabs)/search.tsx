@@ -29,8 +29,6 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// ── SearchHeader Component ──────────────────────────────
-
 interface SearchHeaderProps {
   query: string;
   activeFilter: ContentFilter;
@@ -53,7 +51,6 @@ const SearchHeader = React.memo(
   }: SearchHeaderProps) => {
     return (
       <View style={styles.headerContainer}>
-        {/* Search Bar */}
         <View style={styles.searchBarContainer}>
           <SearchBar
             value={query}
@@ -62,13 +59,11 @@ const SearchHeader = React.memo(
           />
         </View>
 
-        {/* Type Filter */}
         <TypeFilter
           activeFilter={activeFilter}
           onFilterChange={onFilterChange}
         />
 
-        {/* Results count */}
         {hasSearched && resultsLength > 0 && (
           <View style={styles.resultsHeader}>
             <Text style={styles.resultsCount}>พบ {resultsLength} รายการ</Text>
@@ -79,8 +74,6 @@ const SearchHeader = React.memo(
   },
 );
 SearchHeader.displayName = "SearchHeader";
-
-// ── SearchScreen Component ──────────────────────────────
 
 export default function SearchScreen() {
   const {
@@ -239,7 +232,6 @@ export default function SearchScreen() {
         removeClippedSubviews={false}
       />
 
-      {/* FAB - Add Custom Item */}
       <TouchableOpacity
         style={styles.fab}
         onPress={handleAddCustom}

@@ -1,8 +1,3 @@
-/**
- * TMDB (The Movie Database) API Service
- * Used for Movies, TV Series, and Tokusatsu searches
- */
-
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -54,10 +49,6 @@ function mapTMDBToSearchResult(
   };
 }
 
-// ========================
-// Search Movies
-// ========================
-
 export async function searchMovies(query: string): Promise<SearchResult[]> {
   if (TMDB_API_KEY === "YOUR_TMDB_API_KEY_HERE") {
     console.warn("TMDB API Key not set. Please update constants/api.ts");
@@ -80,10 +71,6 @@ export async function searchMovies(query: string): Promise<SearchResult[]> {
     return [];
   }
 }
-
-// ========================
-// Search TV Series (Series + Tokusatsu)
-// ========================
 
 export async function searchSeries(
   query: string,
@@ -110,10 +97,6 @@ export async function searchSeries(
     return [];
   }
 }
-
-// ========================
-// Multi Search (Movies + TV)
-// ========================
 
 export async function searchAll(query: string): Promise<SearchResult[]> {
   if (TMDB_API_KEY === "YOUR_TMDB_API_KEY_HERE") {

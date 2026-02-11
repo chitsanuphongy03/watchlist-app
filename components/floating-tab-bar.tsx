@@ -14,7 +14,7 @@ import {
 } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const TAB_BAR_WIDTH = SCREEN_WIDTH - 32; // 16px margin each side
+const TAB_BAR_WIDTH = SCREEN_WIDTH - 32;
 const TAB_BAR_HEIGHT = 64;
 
 const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
@@ -32,7 +32,6 @@ export function FloatingTabBar({
   const tabCount = state.routes.length;
   const tabWidth = TAB_BAR_WIDTH / tabCount;
 
-  // Animated pill indicator position
   const indicatorAnim = useRef(new Animated.Value(state.index)).current;
 
   useEffect(() => {
@@ -52,7 +51,6 @@ export function FloatingTabBar({
   return (
     <View style={styles.wrapper}>
       <View style={styles.container}>
-        {/* Animated pill indicator */}
         <Animated.View
           style={[
             styles.indicator,
@@ -63,7 +61,6 @@ export function FloatingTabBar({
           ]}
         />
 
-        {/* Tab items */}
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label = options.title ?? route.name;
@@ -148,13 +145,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.surface,
     borderRadius: 20,
     alignItems: "center",
-    // Shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
     elevation: 12,
-    // Subtle border
     borderWidth: 0.5,
     borderColor: Colors.dark.border,
   },

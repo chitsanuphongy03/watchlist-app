@@ -9,7 +9,7 @@ import {
 } from "@/constants/theme";
 import { useUIStore } from "@/stores/ui-store";
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur"; // Beautiful glassmorphism effect
+import { BlurView } from "expo-blur";
 import React from "react";
 import {
     Modal,
@@ -19,7 +19,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-// VS Code Tip: If 'expo-blur' is still red, press Ctrl+Shift+P and run "TypeScript: Restart TS Server"
+
 import Animated, {
     FadeIn,
     FadeOut,
@@ -32,7 +32,6 @@ export function PopupProvider() {
 
   return (
     <>
-      {/* Alert Modal */}
       <Modal visible={!!alert} transparent animationType="none">
         {alert && (
           <View style={styles.alertOverlay}>
@@ -103,7 +102,6 @@ export function PopupProvider() {
         )}
       </Modal>
 
-      {/* Toast Notification */}
       {toast && (
         <Animated.View
           entering={SlideInUp.springify()}
@@ -195,7 +193,7 @@ const styles = StyleSheet.create({
   buttonTextCancel: {
     color: Colors.dark.textMuted,
   },
-  // Toast Styles
+
   toastContainer: {
     position: "absolute",
     top: 60,

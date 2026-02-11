@@ -22,7 +22,6 @@ import DraggableFlatList, {
 import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// ── Swipeable Card Wrapper ──────────────────────────────
 function SwipeableCard({
   item,
   index,
@@ -52,19 +51,16 @@ function SwipeableCard({
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const [exitType, setExitType] = useState<"watched" | "delete" | null>(null);
 
-  // Animate exit: overlay flash → height collapse → callback
   const animateExit = useCallback(
     (type: "watched" | "delete", callback: () => void) => {
       setExitType(type);
 
-      // 1. Flash overlay
       Animated.timing(overlayOpacity, {
         toValue: 1,
         duration: 200,
         useNativeDriver: false,
       }).start();
 
-      // 2. After a beat, collapse height + fade out
       setTimeout(() => {
         Animated.parallel([
           Animated.timing(heightAnim, {
@@ -85,7 +81,6 @@ function SwipeableCard({
     [heightAnim, fadeAnim, overlayOpacity],
   );
 
-  // Right swipe action → GREEN "ดูแล้ว"
   const renderLeftActions = useCallback(
     (
       _progress: Animated.AnimatedInterpolation<number>,
@@ -120,7 +115,6 @@ function SwipeableCard({
     [],
   );
 
-  // Left swipe action → RED "ลบ"
   const renderRightActions = useCallback(
     (
       _progress: Animated.AnimatedInterpolation<number>,
@@ -184,7 +178,7 @@ function SwipeableCard({
           overshootLeft={false}
           overshootRight={false}
           friction={1.5}
-          activeOffsetX={[-10, 10]} // Reduced threshold for easier horizontal swipe
+          activeOffsetX={[-5, 5]}
         >
           <WatchlistCard
             item={item}
@@ -198,7 +192,6 @@ function SwipeableCard({
           />
         </Swipeable>
 
-        {/* Exit overlay */}
         {exitType && (
           <Animated.View
             style={[
@@ -249,7 +242,6 @@ function SwipeableCard({
   );
 }
 
-// ── Main Screen ──────────────────────────────
 export default function HomeScreen() {
   const {
     items,
@@ -271,7 +263,7 @@ export default function HomeScreen() {
   const filteredItems = useMemo(() => {
     return items
       .filter((item) => contentFilter === "all" || item.type === contentFilter)
-      .filter((item) => item.status !== "watched") // Hide watched items
+      .filter((item) => item.status !== "watched")
       .sort((a, b) => a.rank - b.rank);
   }, [items, contentFilter]);
 
@@ -321,7 +313,6 @@ export default function HomeScreen() {
   const renderHeader = useCallback(
     () => (
       <View>
-        {/* App Title */}
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Watchlist</Text>
@@ -332,7 +323,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Next Up Card */}
         {nextItem && (
           <NextUpCard
             item={nextItem}
@@ -340,7 +330,6 @@ export default function HomeScreen() {
           />
         )}
 
-        {/* Filters */}
         {items.length > 0 && (
           <TypeFilter
             activeFilter={contentFilter}
@@ -348,7 +337,6 @@ export default function HomeScreen() {
           />
         )}
 
-        {/* List Header */}
         {filteredItems.length > 0 && (
           <View style={styles.listHeader}>
             <Text style={styles.listTitle}>รายการทั้งหมด</Text>
@@ -356,7 +344,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Swipe Hint */}
         {filteredItems.length > 0 && (
           <View style={styles.swipeHint}>
             <Text style={styles.swipeHintText}>
@@ -461,7 +448,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.textMuted,
   },
   listContent: {
-    paddingBottom: 100, // Account for floating tab bar
+    paddingBottom: 100,
   },
   listContentEmpty: {
     flexGrow: 1,
@@ -477,7 +464,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  // ── Swipe Actions ──
   swipeAction: {
     justifyContent: "center",
     alignItems: "center",
@@ -522,7 +508,6 @@ const styles = StyleSheet.create({
     color: Colors.dark.error,
   },
 
-  // ── Exit Animation Overlay ──
   exitOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 12,

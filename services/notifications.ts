@@ -92,7 +92,7 @@ export async function scheduleReminder(
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-          weekday: 1, // Monday
+          weekday: 1,
           hour: hours,
           minute: minutes,
         },

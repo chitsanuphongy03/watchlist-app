@@ -77,7 +77,6 @@ export default function AddCustomScreen() {
             เพิ่มหนัง อนิเมะ ซีรีส์ หรือโทคุซัทสึ ที่ค้นหาไม่เจอ
           </Text>
 
-          {/* Title Input */}
           <View style={styles.field}>
             <Text style={styles.label}>ชื่อเรื่อง *</Text>
             <TextInput
@@ -91,7 +90,6 @@ export default function AddCustomScreen() {
             />
           </View>
 
-          {/* Type Selection */}
           <View style={styles.field}>
             <Text style={styles.label}>ประเภท</Text>
             <View style={styles.typeGrid}>
@@ -118,7 +116,6 @@ export default function AddCustomScreen() {
             </View>
           </View>
 
-          {/* Note Input */}
           <View style={styles.field}>
             <Text style={styles.label}>หมายเหตุ (ไม่บังคับ)</Text>
             <TextInput
@@ -134,7 +131,6 @@ export default function AddCustomScreen() {
             />
           </View>
 
-          {/* Submit Button */}
           <View style={styles.buttonContainer}>
             <GradientButton
               title="เพิ่มเข้า Watchlist"

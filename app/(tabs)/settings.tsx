@@ -1,8 +1,3 @@
-/**
- * Settings Screen
- * Manage PIN, biometric, and notification settings
- */
-
 import {
     Accent,
     Colors,
@@ -132,17 +127,9 @@ export default function SettingsScreen() {
     initSettings();
   }, [initSettings]);
 
-  // ========================
-  // Change PIN
-  // ========================
-
   const handleChangePin = useCallback(() => {
     router.push("/change-pin");
   }, []);
-
-  // ========================
-  // Notification Toggle
-  // ========================
 
   const handleToggleNotifications = useCallback(
     async (enabled: boolean) => {
@@ -172,10 +159,6 @@ export default function SettingsScreen() {
     },
     [toggleReminder, getNextItem, updateReminderSchedule],
   );
-
-  // ========================
-  // Render Helpers
-  // ========================
 
   const SettingsSection = ({
     title,

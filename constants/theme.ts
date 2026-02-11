@@ -13,23 +13,26 @@ export const Accent = {
   gradient: ["#FF2D55", "#FF375F"] as [string, string],
 };
 
+const dark = {
+  background: "#000000",
+  surface: "#1C1C1E", // iOS Dark Grey
+  card: "#1C1C1E",
+  border: "#2C2C2E",
+  text: "#FFFFFF",
+  textSecondary: "#EBEBF5",
+  textMuted: "#8E8E93",
+  error: "#FF453A",
+  success: "#32D74B",
+  pinDot: "#3A3A3C",
+  statusNotWatched: "#8E8E93",
+  statusWatching: "#0A84FF",
+  statusWatched: "#30D158",
+  tabIconDefault: "#8E8E93",
+};
+
 export const Colors = {
-  dark: {
-    background: "#000000",
-    surface: "#1C1C1E", // iOS Dark Grey
-    card: "#1C1C1E",
-    border: "#2C2C2E",
-    text: "#FFFFFF",
-    textSecondary: "#EBEBF5",
-    textMuted: "#8E8E93",
-    error: "#FF453A",
-    success: "#32D74B",
-    pinDot: "#3A3A3C",
-    statusNotWatched: "#8E8E93",
-    statusWatching: "#0A84FF",
-    statusWatched: "#30D158",
-    tabIconDefault: "#8E8E93", // Added back
-  },
+  dark,
+  light: dark,
 } as const;
 
 // ========================

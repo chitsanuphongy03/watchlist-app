@@ -1,15 +1,10 @@
-/**
- * Setup PIN Screen
- * First-time PIN creation with confirmation
- */
-
 import { PinPad } from "@/components/pin-pad";
 import {
-  Accent,
-  Colors,
-  FontFamily,
-  FontSize,
-  Spacing,
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Spacing,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,7 +34,6 @@ export default function SetupPinScreen() {
           setPin("");
           setStep("confirm");
         } else {
-          // Confirm step
           if (newPin === firstPin) {
             const success = await setupPin(newPin);
             if (success) {
@@ -71,7 +65,6 @@ export default function SetupPinScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
-        {/* App Icon */}
         <View style={styles.iconContainer}>
           <Ionicons name="lock-closed" size={40} color={Accent.primary} />
         </View>
@@ -85,7 +78,6 @@ export default function SetupPinScreen() {
             : "ใส่ PIN อีกครั้งเพื่อยืนยัน"}
         </Text>
 
-        {/* Step indicator */}
         <View style={styles.stepIndicator}>
           <View style={[styles.stepDot, styles.stepDotActive]} />
           <View style={styles.stepLine} />

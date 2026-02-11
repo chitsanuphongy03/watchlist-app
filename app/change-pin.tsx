@@ -32,7 +32,6 @@ export default function ChangePinScreen() {
 
       if (input.length === 6) {
         if (step === "verify") {
-          // Verify old PIN
           const isValid = await verifyPin(input);
           if (isValid) {
             setStep("create");
@@ -46,12 +45,10 @@ export default function ChangePinScreen() {
             }, 500);
           }
         } else if (step === "create") {
-          // Store first entry of new PIN
           setNewPin(input);
           setPin("");
           setStep("confirm");
         } else if (step === "confirm") {
-          // Verify new PIN matches
           if (input === newPin) {
             const success = await setupPin(input);
             if (success) {
@@ -63,9 +60,8 @@ export default function ChangePinScreen() {
             setTimeout(() => {
               setPin("");
               setError(false);
-              // Optional: go back to create step to retry
-              // setStep("create");
-              // setNewPin("");
+              setPin("");
+              setError(false);
             }, 500);
           }
         }
@@ -81,8 +77,6 @@ export default function ChangePinScreen() {
       setNewPin("");
       setError(false);
     } else if (step === "create") {
-      // Should we allow going back to verify? Maybe just cancel?
-      // For now, let's just go back to verify
       setStep("verify");
       setPin("");
       setError(false);
@@ -117,7 +111,6 @@ export default function ChangePinScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Header with Back Button */}
       <View style={styles.header}>
         <Text style={styles.backButton} onPress={handleBack}>
           <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
@@ -140,7 +133,7 @@ export default function ChangePinScreen() {
         <Text style={styles.title}>{getTitle()}</Text>
         <Text style={styles.subtitle}>{getSubtitle()}</Text>
 
-        {/* Step dots */}
+        <Text style={styles.subtitle}>{getSubtitle()}</Text>
         <View style={styles.stepIndicator}>
           <View
             style={[styles.stepDot, step === "verify" && styles.stepDotActive]}
@@ -182,7 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
-    marginTop: -Spacing.xl, // Offset header
+    marginTop: -Spacing.xl,
   },
   iconContainer: {
     width: 80,

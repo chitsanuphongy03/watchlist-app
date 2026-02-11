@@ -1,12 +1,12 @@
 import {
-  Accent,
-  Colors,
-  ContentTypeLabel,
-  FontFamily,
-  FontSize,
-  Radius,
-  Shadow,
-  Spacing,
+    Accent,
+    Colors,
+    ContentTypeLabel,
+    FontFamily,
+    FontSize,
+    Radius,
+    Shadow,
+    Spacing,
 } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { SearchResult } from "@/types";
@@ -38,7 +38,6 @@ export function SearchResultCard({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Poster */}
       <View style={styles.posterContainer}>
         {item.posterUrl ? (
           <Image
@@ -58,7 +57,6 @@ export function SearchResultCard({
         )}
       </View>
 
-      {/* Info */}
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={2}>
           {item.title}
@@ -82,7 +80,6 @@ export function SearchResultCard({
         )}
       </View>
 
-      {/* Add Button */}
       <TouchableOpacity
         style={[styles.addButton, isInWatchlist && styles.addButtonDisabled]}
         onPress={onAdd}

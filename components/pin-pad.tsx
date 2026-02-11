@@ -1,8 +1,3 @@
-/**
- * PIN Pad Component
- * Numeric keypad for PIN entry with biometric option
- */
-
 import {
     Accent,
     Colors,

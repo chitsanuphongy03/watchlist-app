@@ -1,13 +1,13 @@
 import { StatusBadge } from "@/components/status-badge";
 import {
-  Accent,
-  Colors,
-  ContentTypeLabel,
-  FontFamily,
-  FontSize,
-  Radius,
-  Shadow,
-  Spacing,
+    Accent,
+    Colors,
+    ContentTypeLabel,
+    FontFamily,
+    FontSize,
+    Radius,
+    Shadow,
+    Spacing,
 } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { WatchStatus } from "@/types";
@@ -17,12 +17,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { useUIStore } from "@/stores/ui-store";
@@ -82,7 +82,6 @@ export default function DetailScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header with poster */}
       <View style={styles.header}>
         <LinearGradient
           colors={["transparent", Colors.dark.background]}
@@ -108,15 +107,12 @@ export default function DetailScreen() {
         </View>
       </View>
 
-      {/* Content */}
       <View style={styles.content}>
-        {/* Title */}
         <Text style={styles.title}>{item.title}</Text>
         {item.titleTh && item.titleTh !== item.title && (
           <Text style={styles.titleTh}>{item.titleTh}</Text>
         )}
 
-        {/* Meta */}
         <View style={styles.metaRow}>
           <View style={styles.metaChip}>
             <Text style={styles.metaChipText}>
@@ -138,7 +134,6 @@ export default function DetailScreen() {
           </View>
         </View>
 
-        {/* Status Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>สถานะ</Text>
           <View style={styles.statusRow}>
@@ -158,7 +153,6 @@ export default function DetailScreen() {
           </View>
         </View>
 
-        {/* Overview */}
         {item.overview && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>เรื่องย่อ</Text>
@@ -166,13 +160,11 @@ export default function DetailScreen() {
           </View>
         )}
 
-        {/* Note */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>หมายเหตุ</Text>
           <Text style={styles.note}>{item.note || "ไม่มีหมายเหตุ"}</Text>
         </View>
 
-        {/* Info */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>ข้อมูล</Text>
           <View style={styles.infoRow}>
@@ -193,7 +185,6 @@ export default function DetailScreen() {
           </View>
         </View>
 
-        {/* Delete Button */}
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={handleDelete}

@@ -10,7 +10,6 @@ interface AuthState {
   isBiometricEnabled: boolean;
   isLoading: boolean;
 
-  // Actions
   initialize: () => Promise<void>;
   setupPin: (pin: string) => Promise<boolean>;
   verifyPin: (pin: string) => Promise<boolean>;
