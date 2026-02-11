@@ -178,7 +178,8 @@ function SwipeableCard({
           overshootLeft={false}
           overshootRight={false}
           friction={1.5}
-          activeOffsetX={[-5, 5]}
+          containerStyle={{ overflow: "visible" }}
+          childrenContainerStyle={{ overflow: "visible" }}
         >
           <WatchlistCard
             item={item}
