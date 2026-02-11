@@ -46,16 +46,27 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   fetchDiscovery: async () => {
     const { discovery } = get();
-    if (discovery.movies.length > 0) return;
+    const hasData =
+      discovery.movies.length > 0 ||
+      discovery.series.length > 0 ||
+      discovery.anime.length > 0 ||
+      discovery.tokusatsu.length > 0;
+    if (hasData) return;
 
     set({ isDiscoveryLoading: true });
     try {
-      const [movies, series, anime, tokusatsu] = await Promise.all([
+      const results = await Promise.allSettled([
         getNowPlayingMovies(),
         getOnTheAirSeries(),
         getSeasonNowAnime(),
         searchTokusatsu(),
       ]);
+
+      const movies = results[0].status === "fulfilled" ? results[0].value : [];
+      const series = results[1].status === "fulfilled" ? results[1].value : [];
+      const anime = results[2].status === "fulfilled" ? results[2].value : [];
+      const tokusatsu =
+        results[3].status === "fulfilled" ? results[3].value : [];
 
       set({
         discovery: { movies, series, anime, tokusatsu },
