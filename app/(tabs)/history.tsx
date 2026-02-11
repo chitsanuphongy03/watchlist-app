@@ -14,7 +14,7 @@ export default function HistoryScreen() {
   const historyItems = useMemo(() => {
     return items
       .filter((item) => item.status === "watched")
-      .sort((a, b) => b.updatedAt - a.updatedAt); // Newest first
+      .sort((a, b) => b.updatedAt - a.updatedAt);
   }, [items]);
 
   const handleItemPress = useCallback((item: WatchlistItem) => {

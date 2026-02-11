@@ -1,18 +1,20 @@
 import { PinPad } from "@/components/pin-pad";
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Step = "verify" | "create" | "confirm";
 
@@ -112,9 +114,13 @@ export default function ChangePinScreen() {
       <StatusBar style="light" />
 
       <View style={styles.header}>
-        <Text style={styles.backButton} onPress={handleBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBack}
+          activeOpacity={0.7}
+        >
           <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
-        </Text>
+        </TouchableOpacity>
       </View>
 
       <Animated.View
@@ -133,7 +139,6 @@ export default function ChangePinScreen() {
         <Text style={styles.title}>{getTitle()}</Text>
         <Text style={styles.subtitle}>{getSubtitle()}</Text>
 
-        <Text style={styles.subtitle}>{getSubtitle()}</Text>
         <View style={styles.stepIndicator}>
           <View
             style={[styles.stepDot, step === "verify" && styles.stepDotActive]}
@@ -166,9 +171,17 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
+    zIndex: 100,
+    position: "relative",
   },
   backButton: {
     padding: Spacing.sm,
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: Radius.full,
+    backgroundColor: Colors.dark.surface,
   },
   content: {
     flex: 1,

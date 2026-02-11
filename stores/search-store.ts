@@ -1,11 +1,21 @@
-import { searchAnime } from "@/services/jikan";
+import { getSeasonNowAnime, searchAnime } from "@/services/jikan";
 import {
+  getNowPlayingMovies,
+  getOnTheAirSeries,
   searchMovies,
   searchSeries,
+  searchTokusatsu,
   searchAll as tmdbSearchAll,
 } from "@/services/tmdb";
 import type { ContentFilter, SearchResult } from "@/types";
 import { create } from "zustand";
+
+interface DiscoveryState {
+  movies: SearchResult[];
+  series: SearchResult[];
+  anime: SearchResult[];
+  tokusatsu: SearchResult[];
+}
 
 interface SearchState {
   query: string;
@@ -13,6 +23,10 @@ interface SearchState {
   isLoading: boolean;
   activeFilter: ContentFilter;
   hasSearched: boolean;
+
+  discovery: DiscoveryState;
+  isDiscoveryLoading: boolean;
+  fetchDiscovery: () => Promise<void>;
 
   setQuery: (query: string) => void;
   setActiveFilter: (filter: ContentFilter) => void;
@@ -26,6 +40,32 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   isLoading: false,
   activeFilter: "all",
   hasSearched: false,
+
+  discovery: { movies: [], series: [], anime: [], tokusatsu: [] },
+  isDiscoveryLoading: false,
+
+  fetchDiscovery: async () => {
+    const { discovery } = get();
+    if (discovery.movies.length > 0) return;
+
+    set({ isDiscoveryLoading: true });
+    try {
+      const [movies, series, anime, tokusatsu] = await Promise.all([
+        getNowPlayingMovies(),
+        getOnTheAirSeries(),
+        getSeasonNowAnime(),
+        searchTokusatsu(),
+      ]);
+
+      set({
+        discovery: { movies, series, anime, tokusatsu },
+        isDiscoveryLoading: false,
+      });
+    } catch (error) {
+      console.error("Discovery fetch error:", error);
+      set({ isDiscoveryLoading: false });
+    }
+  },
 
   setQuery: (query: string) => set({ query }),
 

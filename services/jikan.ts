@@ -73,3 +73,16 @@ export async function getAnimeDetails(
     return null;
   }
 }
+export async function getSeasonNowAnime(): Promise<SearchResult[]> {
+  try {
+    const url = `${JIKAN_BASE_URL}/seasons/now?limit=10&sfw=true`;
+    const response = await rateLimitedFetch(url);
+    if (!response.ok) throw new Error(`Jikan Error: ${response.status}`);
+
+    const data: JikanSearchResponse = await response.json();
+    return data.data.map(mapJikanToSearchResult);
+  } catch (error) {
+    console.error("Error fetching season now anime:", error);
+    return [];
+  }
+}

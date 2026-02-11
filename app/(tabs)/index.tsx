@@ -184,8 +184,8 @@ function SwipeableCard({
           <WatchlistCard
             item={item}
             onPress={onPress}
-            onLongPress={drag} // Trigger drag on long press
-            disabled={isActive} // Disable press when dragging
+            onLongPress={drag}
+            disabled={isActive}
             onMoveUp={onMoveUp}
             onMoveDown={onMoveDown}
             isFirst={index === 0}

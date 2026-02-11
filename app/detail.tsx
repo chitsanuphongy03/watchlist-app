@@ -1,28 +1,28 @@
-import { StatusBadge } from "@/components/status-badge";
+import { StatusToggle } from "@/components/status-toggle";
 import {
-    Accent,
-    Colors,
-    ContentTypeLabel,
-    FontFamily,
-    FontSize,
-    Radius,
-    Shadow,
-    Spacing,
+  Accent,
+  Colors,
+  ContentTypeLabel,
+  FontFamily,
+  FontSize,
+  Radius,
+  Shadow,
+  Spacing,
 } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
-import type { WatchStatus } from "@/types";
+import type { SearchResult, WatchlistItem, WatchStatus } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { useUIStore } from "@/stores/ui-store";
@@ -31,26 +31,63 @@ const { width } = Dimensions.get("window");
 const POSTER_WIDTH = width * 0.4;
 const POSTER_HEIGHT = POSTER_WIDTH * 1.5;
 
-const STATUS_OPTIONS: WatchStatus[] = ["not_watched", "watched"];
-
 export default function DetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { items, updateStatus, removeItem } = useWatchlistStore();
+  const { id, item: itemParam } = useLocalSearchParams<{
+    id: string;
+    item: string;
+  }>();
+  const { items, updateStatus, removeItem, addItem } = useWatchlistStore();
   const { showAlert, showToast } = useUIStore();
 
-  const item = useMemo(() => items.find((i) => i.id === id), [items, id]);
+  const watchlistMatch = useMemo(() => {
+    const exactMatch = items.find((i) => i.id === id);
+    if (exactMatch) return exactMatch;
+
+    if (itemParam) {
+      try {
+        const parsed: SearchResult = JSON.parse(itemParam);
+        return items.find(
+          (i) => i.sourceId === parsed.sourceId && i.source === parsed.source,
+        );
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  }, [items, id, itemParam]);
+
+  const item = useMemo(() => {
+    if (watchlistMatch) return watchlistMatch;
+    if (itemParam) {
+      try {
+        return JSON.parse(itemParam) as SearchResult;
+      } catch (e) {
+        console.error("Failed to parse item param", e);
+        return null;
+      }
+    }
+    return null;
+  }, [watchlistMatch, itemParam]);
+
+  const isInWatchlist = !!watchlistMatch;
 
   const handleStatusChange = useCallback(
     async (status: WatchStatus) => {
-      if (!item) return;
+      if (!item || !isInWatchlist) return;
       await updateStatus(item.id, status);
       showToast({ message: "อัปเดตสถานะแล้ว", type: "success" });
     },
-    [item, updateStatus, showToast],
+    [item, isInWatchlist, updateStatus, showToast],
   );
 
-  const handleDelete = useCallback(() => {
+  const handleAddToWatchlist = useCallback(async () => {
     if (!item) return;
+    await addItem(item as SearchResult);
+    showToast({ message: `เพิ่ม "${item.title}" แล้ว `, type: "success" });
+  }, [item, addItem, showToast]);
+
+  const handleDelete = useCallback(() => {
+    if (!item || !isInWatchlist) return;
     showAlert({
       title: "ลบรายการ",
       message: `ต้องการลบ "${item.title}" ออกจาก Watchlist หรือไม่?`,
@@ -61,7 +98,6 @@ export default function DetailScreen() {
           style: "destructive",
           onPress: async () => {
             router.back();
-            // Small delay to allow navigation to start
             setTimeout(async () => {
               await removeItem(item.id);
               showToast({ message: "ลบรายการแล้ว", type: "success" });
@@ -70,7 +106,7 @@ export default function DetailScreen() {
         },
       ],
     });
-  }, [item, removeItem, showAlert, showToast]);
+  }, [item, isInWatchlist, removeItem, showAlert, showToast]);
 
   if (!item) {
     return (
@@ -112,7 +148,6 @@ export default function DetailScreen() {
         {item.titleTh && item.titleTh !== item.title && (
           <Text style={styles.titleTh}>{item.titleTh}</Text>
         )}
-
         <View style={styles.metaRow}>
           <View style={styles.metaChip}>
             <Text style={styles.metaChipText}>
@@ -129,42 +164,48 @@ export default function DetailScreen() {
               <Text style={styles.metaChipText}>{item.episodes} ตอน</Text>
             </View>
           )}
-          <View style={styles.metaChip}>
-            <Text style={styles.metaChipText}>อันดับ #{item.rank}</Text>
-          </View>
+          {isInWatchlist && (
+            <View style={styles.metaChip}>
+              <Text style={styles.metaChipText}>
+                อันดับ #{(item as WatchlistItem).rank || "-"}
+              </Text>
+            </View>
+          )}
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>สถานะ</Text>
-          <View style={styles.statusRow}>
-            {STATUS_OPTIONS.map((status) => (
-              <TouchableOpacity
-                key={status}
-                style={[
-                  styles.statusButton,
-                  item.status === status && styles.statusButtonActive,
-                ]}
-                onPress={() => handleStatusChange(status)}
-                activeOpacity={0.7}
-              >
-                <StatusBadge status={status} size="md" />
-              </TouchableOpacity>
-            ))}
+        {isInWatchlist ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>สถานะ</Text>
+            <StatusToggle
+              status={(item as WatchlistItem).status}
+              onStatusChange={handleStatusChange}
+            />
           </View>
-        </View>
-
+        ) : (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddToWatchlist}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add-circle" size={24} color="#FFFFFF" />
+              <Text style={styles.addButtonText}>เพิ่มลง Watchlist</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {item.overview && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>เรื่องย่อ</Text>
             <Text style={styles.overview}>{item.overview}</Text>
           </View>
         )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>หมายเหตุ</Text>
-          <Text style={styles.note}>{item.note || "ไม่มีหมายเหตุ"}</Text>
-        </View>
-
+        {isInWatchlist && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>หมายเหตุ</Text>
+            <Text style={styles.note}>
+              {(item as WatchlistItem).note || "ไม่มีหมายเหตุ"}
+            </Text>
+          </View>
+        )}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>ข้อมูล</Text>
           <View style={styles.infoRow}>
@@ -177,23 +218,31 @@ export default function DetailScreen() {
                   : "กำหนดเอง"}
             </Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>เพิ่มเมื่อ</Text>
-            <Text style={styles.infoValue}>
-              {new Date(item.addedAt).toLocaleDateString("th-TH")}
-            </Text>
-          </View>
+          {isInWatchlist && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>เพิ่มเมื่อ</Text>
+              <Text style={styles.infoValue}>
+                {new Date((item as WatchlistItem).addedAt).toLocaleDateString(
+                  "th-TH",
+                )}
+              </Text>
+            </View>
+          )}
         </View>
-
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="trash-outline" size={18} color={Colors.dark.error} />
-          <Text style={styles.deleteText}>ลบออกจาก Watchlist</Text>
-        </TouchableOpacity>
-
+        {isInWatchlist && (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={18}
+              color={Colors.dark.error}
+            />
+            <Text style={styles.deleteText}>ลบออกจาก Watchlist</Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.bottomPadding} />
       </View>
     </ScrollView>
@@ -286,24 +335,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: Spacing.sm,
   },
-  statusRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  statusButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.dark.surface,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-    alignItems: "center",
-  },
-  statusButtonActive: {
-    borderColor: Accent.primary,
-    backgroundColor: Accent.primary + "15",
-  },
   overview: {
     fontSize: FontSize.md,
     fontFamily: FontFamily.regular,
@@ -331,6 +362,21 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.dark.textSecondary,
     fontFamily: FontFamily.medium,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    backgroundColor: Accent.primary,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    ...Shadow.md,
+  },
+  addButtonText: {
+    fontSize: FontSize.md,
+    fontFamily: FontFamily.bold,
+    color: "#FFFFFF",
   },
   deleteButton: {
     flexDirection: "row",

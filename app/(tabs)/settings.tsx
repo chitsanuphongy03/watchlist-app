@@ -1,10 +1,10 @@
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Radius,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -13,14 +13,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect } from "react";
 import {
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.textMuted,
   },
   contentContainer: {
-    paddingBottom: 100, // Account for floating tab bar
+    paddingBottom: 100,
   },
   bottomPadding: {
     height: Spacing.xxl,

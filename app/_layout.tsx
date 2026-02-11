@@ -16,12 +16,13 @@ import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
+import { AnimatedSplash } from "@/components/animated-splash";
 import { PopupProvider } from "@/components/ui/popup-provider";
-import { Accent, Colors, FontFamily, FontSize } from "@/constants/theme";
+import { Colors, FontFamily, FontSize } from "@/constants/theme";
 import { saveLastOpened } from "@/services/storage";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
@@ -77,6 +78,7 @@ export default function RootLayout() {
   const initWatchlist = useWatchlistStore((s) => s.initialize);
   const initialized = useRef(false);
 
+  const [isSplashFinished, setSplashFinished] = React.useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular: Inter_400Regular,
     Inter_500Medium: Inter_500Medium,
@@ -107,18 +109,17 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded && !authLoading) {
-      SplashScreen.hideAsync();
     }
   }, [fontsLoaded, authLoading]);
 
   useProtectedRoute();
 
-  if (!fontsLoaded && !fontError) {
+  if ((!fontsLoaded && !fontError) || !isSplashFinished) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={Accent.primary} />
-        <StatusBar style="light" />
-      </View>
+      <AnimatedSplash
+        onAnimationFinish={() => setSplashFinished(true)}
+        isAppReady={fontsLoaded && !authLoading}
+      />
     );
   }
 
@@ -178,11 +179,5 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Colors.dark.background,
   },
 });

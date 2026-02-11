@@ -1,3 +1,4 @@
+import { DiscoverySection } from "@/components/discovery-section";
 import { EmptyState } from "@/components/empty-state";
 import { GradientButton } from "@/components/gradient-button";
 import { SearchBar } from "@/components/search-bar";
@@ -5,11 +6,11 @@ import { SearchResultCard } from "@/components/search-result-card";
 import { TypeFilter } from "@/components/type-filter";
 import { SEARCH_DEBOUNCE_MS } from "@/constants/api";
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Spacing,
 } from "@/constants/theme";
 import { useSearchStore } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -17,13 +18,13 @@ import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { ContentFilter, SearchResult } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -82,14 +83,21 @@ export default function SearchScreen() {
     isLoading,
     activeFilter,
     hasSearched,
+    discovery,
+    isDiscoveryLoading,
     setQuery,
     setActiveFilter,
     searchAll,
     clearResults,
+    fetchDiscovery,
   } = useSearchStore();
 
   const { items, addItem, isInWatchlist } = useWatchlistStore();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    fetchDiscovery();
+  }, [fetchDiscovery]);
 
   const handleQueryChange = useCallback(
     (text: string) => {
@@ -130,7 +138,7 @@ export default function SearchScreen() {
         return;
       }
       await addItem(item);
-      showToast({ message: `เพิ่ม "${item.title}" แล้ว ✅`, type: "success" });
+      showToast({ message: `เพิ่ม "${item.title}" แล้ว `, type: "success" });
     },
     [addItem, isInWatchlist, showToast],
   );
@@ -151,7 +159,14 @@ export default function SearchScreen() {
     [handleAddToWatchlist],
   );
 
-  const renderEmpty = useCallback(() => {
+  const handleDetailPress = useCallback((item: SearchResult) => {
+    router.push({
+      pathname: "/detail",
+      params: { item: JSON.stringify(item) },
+    });
+  }, []);
+
+  const renderContent = useCallback(() => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
@@ -162,42 +177,94 @@ export default function SearchScreen() {
     }
 
     if (!hasSearched) {
+      if (isDiscoveryLoading) {
+        return (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Accent.primary} />
+            <Text style={styles.loadingText}>กำลังโหลดรายการใหม่...</Text>
+          </View>
+        );
+      }
+
       return (
-        <EmptyState
-          icon="search-outline"
-          title="ค้นหาหนัง อนิเมะ ซีรีส์"
-          subtitle="พิมพ์ชื่อเรื่องที่ต้องการค้นหา รองรับทั้งภาษาไทยและอังกฤษ"
-        />
+        <View style={styles.discoveryContainer}>
+          <DiscoverySection
+            title="หนังน่าดู (Now Playing)"
+            data={discovery.movies}
+            onDetailPress={handleDetailPress}
+          />
+          <DiscoverySection
+            title="อนิเมะซีซั่นนี้ (Season Now)"
+            data={discovery.anime}
+            onDetailPress={handleDetailPress}
+          />
+          <DiscoverySection
+            title="ซีรีส์มาใหม่ (On The Air)"
+            data={discovery.series}
+            onDetailPress={handleDetailPress}
+          />
+          <DiscoverySection
+            title="โทคุซัทสึ"
+            data={discovery.tokusatsu}
+            onDetailPress={handleDetailPress}
+          />
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>ไม่เจอเรื่องที่ต้องการ?</Text>
+            <GradientButton
+              title="+ เพิ่มรายการเอง"
+              onPress={handleAddCustom}
+              size="md"
+            />
+          </View>
+        </View>
       );
     }
 
-    return (
-      <EmptyState
-        icon="alert-circle-outline"
-        title="ไม่พบผลลัพธ์"
-        subtitle={`ไม่พบ "${query}" จาก API`}
-      >
-        <GradientButton
-          title="เพิ่มรายการเอง"
-          onPress={handleAddCustom}
-          size="md"
-        />
-      </EmptyState>
-    );
-  }, [isLoading, hasSearched, query, handleAddCustom]);
+    if (results.length === 0) {
+      return (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="ไม่พบผลลัพธ์"
+          subtitle={`ไม่พบ "${query}" จาก API`}
+        >
+          <GradientButton
+            title="เพิ่มรายการเอง"
+            onPress={handleAddCustom}
+            size="md"
+          />
+        </EmptyState>
+      );
+    }
+
+    return null;
+  }, [
+    isLoading,
+    hasSearched,
+    results.length,
+    isDiscoveryLoading,
+    discovery.movies,
+    discovery.anime,
+    discovery.series,
+    discovery.tokusatsu,
+    handleDetailPress,
+    handleAddCustom,
+    query,
+  ]);
 
   const renderFooter = useCallback(() => {
-    if (!hasSearched || results.length === 0) return null;
-    return (
-      <View style={styles.footerContainer}>
-        <Text style={styles.footerText}>ไม่เจอเรื่องที่ต้องการ?</Text>
-        <GradientButton
-          title="+ เพิ่มรายการเอง"
-          onPress={handleAddCustom}
-          size="md"
-        />
-      </View>
-    );
+    if (hasSearched && results.length > 0) {
+      return (
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerText}>ไม่เจอเรื่องที่ต้องการ?</Text>
+          <GradientButton
+            title="+ เพิ่มรายการเอง"
+            onPress={handleAddCustom}
+            size="md"
+          />
+        </View>
+      );
+    }
+    return null;
   }, [hasSearched, results.length, handleAddCustom]);
 
   return (
@@ -221,11 +288,12 @@ export default function SearchScreen() {
             onFilterChange={handleFilterChange}
           />
         }
-        ListEmptyComponent={renderEmpty}
+        ListEmptyComponent={renderContent}
         ListFooterComponent={renderFooter}
         contentContainerStyle={[
           styles.listContent,
-          results.length === 0 && styles.listContentEmpty,
+          !hasSearched && styles.listContentDiscovery,
+          hasSearched && results.length === 0 && styles.listContentEmpty,
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -253,12 +321,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
   },
-  searchTitle: {
-    fontSize: FontSize.md,
-    fontFamily: FontFamily.semibold,
-    color: Colors.dark.textSecondary,
-    marginBottom: Spacing.sm,
-  },
+
   title: {
     fontSize: FontSize.title,
     fontFamily: FontFamily.heavy,
@@ -293,19 +356,20 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
   },
+  listContentDiscovery: {
+    paddingBottom: 100,
+  },
   listContentEmpty: {
     flexGrow: 1,
+  },
+  discoveryContainer: {
+    marginTop: Spacing.sm,
+    paddingBottom: Spacing.xl,
   },
   footerContainer: {
     alignItems: "center",
     padding: Spacing.lg,
     gap: Spacing.md,
-  },
-  subtitle: {
-    fontSize: FontSize.sm,
-    fontFamily: FontFamily.regular,
-    color: Colors.dark.textMuted,
-    marginTop: 4,
   },
   footerText: {
     fontSize: FontSize.sm,
@@ -314,12 +378,12 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: Spacing.xl,
+    bottom: 110,
     right: Spacing.md,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#E91E63", // Accent.primary
+    backgroundColor: Accent.primary,
     justifyContent: "center",
     alignItems: "center",
     elevation: 6,

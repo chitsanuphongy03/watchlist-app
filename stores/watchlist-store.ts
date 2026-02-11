@@ -1,7 +1,3 @@
-/**
- * Watchlist Store - Manages watchlist items, ranking, and status
- */
-
 import { scheduleNextItemNotification } from "@/services/notifications";
 import { getWatchlist, saveWatchlist } from "@/services/storage";
 import type {
@@ -19,7 +15,6 @@ interface WatchlistState {
   contentFilter: ContentFilter;
   statusFilter: StatusFilter;
 
-  // Actions
   initialize: () => Promise<void>;
   addItem: (result: SearchResult) => Promise<void>;
   addCustomItem: (
@@ -35,7 +30,6 @@ interface WatchlistState {
   setStatusFilter: (filter: StatusFilter) => void;
   isInWatchlist: (sourceId: string, source: string) => boolean;
 
-  // Computed
   getFilteredItems: () => WatchlistItem[];
   getNextItem: () => WatchlistItem | null;
 }
@@ -76,6 +70,15 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
   addItem: async (result: SearchResult) => {
     const { items } = get();
+
+    const existingItem = items.find(
+      (i) => i.sourceId === result.sourceId && i.source === result.source,
+    );
+
+    if (existingItem) {
+      return;
+    }
+
     const newRank = items.length + 1;
 
     const newItem: WatchlistItem = {
@@ -122,20 +125,17 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
     const { items } = get();
     const remaining = items.filter((item) => item.id !== id);
 
-    // Split into active and watched
     const active = remaining
       .filter((i) => i.status !== "watched")
       .sort((a, b) => a.rank - b.rank);
     const watched = remaining.filter((i) => i.status === "watched");
 
-    // Re-rank only active items
     const reRankedActive = active.map((item, index) => ({
       ...item,
       rank: index + 1,
       updatedAt: item.updatedAt,
     }));
 
-    // Combine
     const finalItems = [...reRankedActive, ...watched];
     set({ items: finalItems });
     await saveWatchlist(finalItems);
@@ -194,8 +194,6 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
     const { items } = get();
     const watched = items.filter((i) => i.status === "watched");
 
-    // Note: reorderedActiveItems only contains the items passed to DraggableFlatList (active items)
-
     const reRankedActive = reorderedActiveItems.map((item, index) => ({
       ...item,
       rank: index + 1,
@@ -209,7 +207,6 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
   moveUp: async (id: string) => {
     const { items } = get();
-    // Split
     const active = items
       .filter((i) => i.status !== "watched")
       .sort((a, b) => a.rank - b.rank);
@@ -237,7 +234,6 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
   moveDown: async (id: string) => {
     const { items } = get();
-    // Split
     const active = items
       .filter((i) => i.status !== "watched")
       .sort((a, b) => a.rank - b.rank);

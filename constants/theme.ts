@@ -8,14 +8,14 @@
 // ========================
 
 export const Accent = {
-  primary: "#FF2D55", // iOS Hero Red
+  primary: "#FF2D55",
   secondary: "#FF375F",
   gradient: ["#FF2D55", "#FF375F"] as [string, string],
 };
 
 const dark = {
   background: "#000000",
-  surface: "#1C1C1E", // iOS Dark Grey
+  surface: "#1C1C1E",
   card: "#1C1C1E",
   border: "#2C2C2E",
   text: "#FFFFFF",
@@ -40,20 +40,17 @@ export const Colors = {
 // ========================
 
 export const FontFamily = {
-  // Use EXACT Expo Google Font names to ensure they work on all devices
   regular: "NotoSansThai_400Regular",
   medium: "NotoSansThai_500Medium",
   semibold: "NotoSansThai_600SemiBold",
   bold: "NotoSansThai_700Bold",
-  heavy: "NotoSansThai_700Bold", // Fallback to Bold
+  heavy: "NotoSansThai_700Bold",
 
-  // Explicit Thai names
   thaiRegular: "NotoSansThai_400Regular",
   thaiMedium: "NotoSansThai_500Medium",
   thaiSemiBold: "NotoSansThai_600SemiBold",
   thaiBold: "NotoSansThai_700Bold",
 
-  // Inter (English Only)
   interRegular: "Inter_400Regular",
   interBold: "Inter_700Bold",
 } as const;

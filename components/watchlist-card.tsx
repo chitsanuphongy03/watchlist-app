@@ -165,7 +165,4 @@ const styles = StyleSheet.create({
     gap: 8,
     width: 30,
   },
-  actionBtn: {
-    padding: 2,
-  },
 });

@@ -1,26 +1,29 @@
 import { GradientButton } from "@/components/gradient-button";
 import {
-    Accent,
-    Colors,
-    ContentTypeLabel,
-    FontFamily,
-    FontSize,
-    Radius,
-    Spacing,
+  Accent,
+  Colors,
+  ContentTypeLabel,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { ContentType } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,9 +35,23 @@ export default function AddCustomScreen() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<ContentType>("movie");
   const [note, setNote] = useState("");
+  const [image, setImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addCustomItem } = useWatchlistStore();
   const { showToast } = useUIStore();
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [2, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
 
   const handleSubmit = useCallback(async () => {
     if (!title.trim()) {
@@ -48,17 +65,18 @@ export default function AddCustomScreen() {
         title: title.trim(),
         type,
         note: note.trim() || undefined,
+        posterUrl: image || undefined,
         status: "not_watched",
         source: "custom",
       });
-      showToast({ message: "เพิ่มรายการแล้ว ✅", type: "success" });
+      showToast({ message: "เพิ่มรายการแล้ว", type: "success" });
       router.back();
     } catch {
       showToast({ message: "ไม่สามารถเพิ่มรายการได้", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, type, note, addCustomItem, showToast]);
+  }, [title, type, note, image, addCustomItem, showToast]);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
@@ -76,6 +94,34 @@ export default function AddCustomScreen() {
           <Text style={styles.subtitle}>
             เพิ่มหนัง อนิเมะ ซีรีส์ หรือโทคุซัทสึ ที่ค้นหาไม่เจอ
           </Text>
+
+          <View style={styles.imageSection}>
+            <TouchableOpacity
+              style={styles.imagePicker}
+              onPress={pickImage}
+              activeOpacity={0.8}
+            >
+              {image ? (
+                <Image source={{ uri: image }} style={styles.selectedImage} />
+              ) : (
+                <View style={styles.placeholderContainer}>
+                  <Ionicons
+                    name="image-outline"
+                    size={48}
+                    color={Colors.dark.textMuted}
+                  />
+                  <Text style={styles.placeholderText}>เพิ่มรูปปก</Text>
+                </View>
+              )}
+              <View style={styles.editIconContainer}>
+                <Ionicons
+                  name={image ? "pencil" : "add"}
+                  size={16}
+                  color="#FFF"
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>ชื่อเรื่อง *</Text>
@@ -224,5 +270,45 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: Spacing.md,
+  },
+  imageSection: {
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  imagePicker: {
+    width: 120,
+    height: 180,
+    backgroundColor: Colors.dark.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  selectedImage: {
+    width: "100%",
+    height: "100%",
+  },
+  placeholderContainer: {
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  placeholderText: {
+    fontSize: FontSize.xs,
+    color: Colors.dark.textMuted,
+    fontFamily: FontFamily.medium,
+  },
+  editIconContainer: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

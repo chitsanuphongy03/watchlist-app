@@ -5,7 +5,6 @@ import { Platform } from "react-native";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: true,
@@ -47,7 +46,7 @@ export async function scheduleNextItemNotification(
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "ดูจบแล้ว 🎉",
-        body: `ดู "${completedTitle}" จบแล้ว! เรื่องถัดไปที่ควรดูคือ "${nextTitle}"`,
+        body: `ดู "${completedTitle}" จบแล้ว! เรื่องถัดไปคือ "${nextTitle}"`,
         data: { type: "next_item" },
       },
       trigger: {
