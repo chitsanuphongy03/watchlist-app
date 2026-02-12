@@ -10,7 +10,6 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.chitsanuphong.watchlistapp",
       "infoPlist": {
         "NSFaceIDUsageDescription": "ใช้ Face ID เพื่อปลดล็อกแอป Watchlist"
       }

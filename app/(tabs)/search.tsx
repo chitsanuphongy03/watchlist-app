@@ -4,13 +4,13 @@ import { GradientButton } from "@/components/gradient-button";
 import { SearchBar } from "@/components/search-bar";
 import { SearchResultCard } from "@/components/search-result-card";
 import { TypeFilter } from "@/components/type-filter";
-import { SEARCH_DEBOUNCE_MS } from "@/constants/api";
+
 import {
-  Accent,
-  Colors,
-  FontFamily,
-  FontSize,
-  Spacing,
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Spacing,
 } from "@/constants/theme";
 import { useSearchStore } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -18,13 +18,13 @@ import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { ContentFilter, SearchResult } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -85,15 +85,13 @@ export default function SearchScreen() {
     hasSearched,
     discovery,
     isDiscoveryLoading,
-    setQuery,
     setActiveFilter,
-    searchAll,
+    debouncedSearch,
     clearResults,
     fetchDiscovery,
   } = useSearchStore();
 
   const { items, addItem, isInWatchlist } = useWatchlistStore();
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchDiscovery();
@@ -101,21 +99,13 @@ export default function SearchScreen() {
 
   const handleQueryChange = useCallback(
     (text: string) => {
-      setQuery(text);
-
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-
-      if (text.trim().length >= 2) {
-        debounceRef.current = setTimeout(() => {
-          searchAll(text);
-        }, SEARCH_DEBOUNCE_MS);
-      } else if (text.trim().length === 0) {
+      if (text.trim().length === 0) {
         clearResults();
+      } else {
+        debouncedSearch(text);
       }
     },
-    [setQuery, searchAll, clearResults],
+    [debouncedSearch, clearResults],
   );
 
   const handleClear = useCallback(() => {

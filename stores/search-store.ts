@@ -31,8 +31,12 @@ interface SearchState {
   setQuery: (query: string) => void;
   setActiveFilter: (filter: ContentFilter) => void;
   searchAll: (query: string) => Promise<void>;
+  debouncedSearch: (query: string) => void;
   clearResults: () => void;
 }
+
+let searchCounter = 0;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useSearchStore = create<SearchState>((set, get) => ({
   query: "",
@@ -88,12 +92,29 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
   },
 
+  debouncedSearch: (query: string) => {
+    set({ query });
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    if (query.trim().length < 2) {
+      set({ results: [], hasSearched: false, isLoading: false });
+      return;
+    }
+
+    set({ isLoading: true });
+    debounceTimer = setTimeout(() => {
+      get().searchAll(query);
+    }, 400);
+  },
+
   searchAll: async (query: string) => {
     if (query.trim().length < 2) {
       set({ results: [], hasSearched: false });
       return;
     }
 
+    const currentSearch = ++searchCounter;
     set({ isLoading: true, query, hasSearched: true });
 
     try {
@@ -123,10 +144,11 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           break;
         }
       }
+      if (currentSearch !== searchCounter) return;
 
       const seen = new Set<string>();
       const deduped = results.filter((item) => {
-        const key = item.title.toLowerCase();
+        const key = `${item.title.toLowerCase()}_${item.year}_${item.type}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -134,12 +156,15 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       set({ results: deduped, isLoading: false });
     } catch (error) {
+      if (currentSearch !== searchCounter) return;
       console.error("Search error:", error);
       set({ results: [], isLoading: false });
     }
   },
 
   clearResults: () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    searchCounter++;
     set({ query: "", results: [], hasSearched: false, activeFilter: "all" });
   },
 }));

@@ -118,7 +118,7 @@ export default function RootLayout() {
     return (
       <AnimatedSplash
         onAnimationFinish={() => setSplashFinished(true)}
-        isAppReady={fontsLoaded && !authLoading}
+        isAppReady={(fontsLoaded || !!fontError) && !authLoading}
       />
     );
   }
