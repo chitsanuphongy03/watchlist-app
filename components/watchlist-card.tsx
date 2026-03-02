@@ -12,8 +12,7 @@ import type { WatchlistItem } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AnimatedRank } from "./animated-rank";
 import { StatusBadge } from "./status-badge";
 

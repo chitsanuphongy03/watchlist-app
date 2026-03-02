@@ -196,15 +196,5 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.6)",
     lineHeight: 16,
   },
-  playBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 4,
-  },
-  playText: {
-    fontSize: FontSize.sm,
-    fontFamily: FontFamily.bold,
-    color: "#FFF",
-  },
+
 });

@@ -1,8 +1,9 @@
 import { EmptyState } from "@/components/empty-state";
 import { NextUpCard } from "@/components/next-up-card";
+import { WatchlistCardSkeleton } from "@/components/skeleton";
 import { TypeFilter } from "@/components/type-filter";
 import { WatchlistCard } from "@/components/watchlist-card";
-import { Colors, FontFamily, FontSize, Spacing } from "@/constants/theme";
+import { Accent, Colors, FontFamily, FontSize, Spacing } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { WatchlistItem } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,7 +15,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -243,22 +250,52 @@ function SwipeableCard({
   );
 }
 
+// Loading skeleton component
+function WatchlistSkeleton() {
+  return (
+    <View style={{ paddingTop: 8, gap: 8 }}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <WatchlistCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
-  const {
-    items,
-    isLoading,
-    contentFilter,
-    initialize,
-    setContentFilter,
-    moveUp,
-    moveDown,
-    updateStatus,
-    removeItem,
-    reorder,
-  } = useWatchlistStore();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Use individual selectors to prevent unnecessary re-renders
+  const items = useWatchlistStore(useCallback((state) => state.items, []));
+  const isLoading = useWatchlistStore(
+    useCallback((state) => state.isLoading, [])
+  );
+  const contentFilter = useWatchlistStore(
+    useCallback((state) => state.contentFilter, [])
+  );
+  const initialize = useWatchlistStore(
+    useCallback((state) => state.initialize, [])
+  );
+  const setContentFilter = useWatchlistStore(
+    useCallback((state) => state.setContentFilter, [])
+  );
+  const moveUp = useWatchlistStore(useCallback((state) => state.moveUp, []));
+  const moveDown = useWatchlistStore(useCallback((state) => state.moveDown, []));
+  const updateStatus = useWatchlistStore(
+    useCallback((state) => state.updateStatus, [])
+  );
+  const removeItem = useWatchlistStore(
+    useCallback((state) => state.removeItem, [])
+  );
+  const reorder = useWatchlistStore(useCallback((state) => state.reorder, []));
 
   useEffect(() => {
     initialize();
+  }, [initialize]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await initialize();
+    setRefreshing(false);
   }, [initialize]);
 
   const filteredItems = useMemo(() => {
@@ -365,7 +402,9 @@ export default function HomeScreen() {
   );
 
   const renderEmpty = useCallback(() => {
-    if (isLoading) return null;
+    if (isLoading) {
+      return <WatchlistSkeleton />;
+    }
 
     if (items.length === 0) {
       return (

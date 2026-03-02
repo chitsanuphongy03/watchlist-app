@@ -7,6 +7,7 @@ import {
   searchTokusatsu,
   searchAll as tmdbSearchAll,
 } from "@/services/tmdb";
+import { PAGINATION, TIMEOUTS } from "@/constants/config";
 import type { ContentFilter, SearchResult } from "@/types";
 import { create } from "zustand";
 
@@ -97,7 +98,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
-    if (query.trim().length < 2) {
+    if (query.trim().length < PAGINATION.MIN_SEARCH_LENGTH) {
       set({ results: [], hasSearched: false, isLoading: false });
       return;
     }
@@ -105,7 +106,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     set({ isLoading: true });
     debounceTimer = setTimeout(() => {
       get().searchAll(query);
-    }, 400);
+    }, TIMEOUTS.DEBOUNCE);
   },
 
   searchAll: async (query: string) => {

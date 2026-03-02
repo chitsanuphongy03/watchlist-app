@@ -21,7 +21,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
 import { AnimatedSplash } from "@/components/animated-splash";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { PopupProvider } from "@/components/ui/popup-provider";
+import { validateApiKeys } from "@/constants/api";
 import { Colors, FontFamily, FontSize } from "@/constants/theme";
 import { saveLastOpened } from "@/services/storage";
 import { useAuthStore } from "@/stores/auth-store";
@@ -97,6 +99,9 @@ export default function RootLayout() {
 
     const init = async () => {
       try {
+        // Validate API keys on startup
+        validateApiKeys();
+        
         await initAuth();
         await initWatchlist();
         await saveLastOpened();
@@ -124,8 +129,9 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <Stack
+    <ErrorBoundary>
+      <GestureHandlerRootView style={styles.container}>
+        <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: Colors.dark.background },
@@ -170,9 +176,10 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-      <StatusBar style="light" />
-      <PopupProvider />
-    </GestureHandlerRootView>
+        <StatusBar style="light" />
+        <PopupProvider />
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
 

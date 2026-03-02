@@ -1,16 +1,20 @@
 import { DiscoverySection } from "@/components/discovery-section";
 import { EmptyState } from "@/components/empty-state";
 import { GradientButton } from "@/components/gradient-button";
+import {
+  DiscoverySectionSkeleton,
+  SearchResultCardSkeleton,
+} from "@/components/skeleton";
 import { SearchBar } from "@/components/search-bar";
 import { SearchResultCard } from "@/components/search-result-card";
 import { TypeFilter } from "@/components/type-filter";
 
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Spacing,
 } from "@/constants/theme";
 import { useSearchStore } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -18,15 +22,15 @@ import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { ContentFilter, SearchResult } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -72,11 +76,34 @@ const SearchHeader = React.memo(
         )}
       </View>
     );
-  },
+  }
 );
 SearchHeader.displayName = "SearchHeader";
 
+// Loading skeletons for different states
+function SearchLoading() {
+  return (
+    <View style={styles.loadingContainer}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <SearchResultCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+function DiscoveryLoading() {
+  return (
+    <View style={styles.discoveryContainer}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <DiscoverySectionSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
 export default function SearchScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+
   const {
     query,
     results,
@@ -91,10 +118,26 @@ export default function SearchScreen() {
     fetchDiscovery,
   } = useSearchStore();
 
-  const { items, addItem, isInWatchlist } = useWatchlistStore();
+  const items = useWatchlistStore(useCallback((state) => state.items, []));
+  const addItem = useWatchlistStore(useCallback((state) => state.addItem, []));
+  const isInWatchlist = useWatchlistStore(
+    useCallback(
+      (state) => (sourceId: string, source: string) =>
+        state.items.some(
+          (i) => i.sourceId === sourceId && i.source === source
+        ),
+      []
+    )
+  );
 
   useEffect(() => {
     fetchDiscovery();
+  }, [fetchDiscovery]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchDiscovery();
+    setRefreshing(false);
   }, [fetchDiscovery]);
 
   const handleQueryChange = useCallback(
@@ -105,7 +148,7 @@ export default function SearchScreen() {
         debouncedSearch(text);
       }
     },
-    [debouncedSearch, clearResults],
+    [debouncedSearch, clearResults]
   );
 
   const handleClear = useCallback(() => {
@@ -116,7 +159,7 @@ export default function SearchScreen() {
     (filter: ContentFilter) => {
       setActiveFilter(filter);
     },
-    [setActiveFilter],
+    [setActiveFilter]
   );
 
   const { showToast } = useUIStore();
@@ -130,7 +173,7 @@ export default function SearchScreen() {
       await addItem(item);
       showToast({ message: `เพิ่ม "${item.title}" แล้ว `, type: "success" });
     },
-    [addItem, isInWatchlist, showToast],
+    [addItem, isInWatchlist, showToast]
   );
 
   const handleAddCustom = useCallback(() => {
@@ -146,7 +189,7 @@ export default function SearchScreen() {
         />
       </Animated.View>
     ),
-    [handleAddToWatchlist],
+    [handleAddToWatchlist]
   );
 
   const handleDetailPress = useCallback((item: SearchResult) => {
@@ -158,46 +201,62 @@ export default function SearchScreen() {
 
   const renderContent = useCallback(() => {
     if (isLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Accent.primary} />
-          <Text style={styles.loadingText}>กำลังค้นหา...</Text>
-        </View>
-      );
+      return <SearchLoading />;
     }
 
     if (!hasSearched) {
       if (isDiscoveryLoading) {
-        return (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Accent.primary} />
-            <Text style={styles.loadingText}>กำลังโหลดรายการใหม่...</Text>
-          </View>
-        );
+        return <DiscoveryLoading />;
       }
+
+      // Filter discovery sections based on activeFilter
+      const showMovies = activeFilter === "all" || activeFilter === "movie";
+      const showAnime = activeFilter === "all" || activeFilter === "anime";
+      const showSeries = activeFilter === "all" || activeFilter === "series";
+      const showTokusatsu =
+        activeFilter === "all" || activeFilter === "tokusatsu";
+
+      // Check if any section will be shown
+      const hasVisibleSections =
+        showMovies || showAnime || showSeries || showTokusatsu;
 
       return (
         <View style={styles.discoveryContainer}>
-          <DiscoverySection
-            title="หนังน่าดู (Now Playing)"
-            data={discovery.movies}
-            onDetailPress={handleDetailPress}
-          />
-          <DiscoverySection
-            title="อนิเมะซีซั่นนี้ (Season Now)"
-            data={discovery.anime}
-            onDetailPress={handleDetailPress}
-          />
-          <DiscoverySection
-            title="ซีรีส์มาใหม่ (On The Air)"
-            data={discovery.series}
-            onDetailPress={handleDetailPress}
-          />
-          <DiscoverySection
-            title="โทคุซัทสึ"
-            data={discovery.tokusatsu}
-            onDetailPress={handleDetailPress}
-          />
+          {showMovies && (
+            <DiscoverySection
+              title="หนังน่าดู (Now Playing)"
+              data={discovery.movies}
+              onDetailPress={handleDetailPress}
+            />
+          )}
+          {showAnime && (
+            <DiscoverySection
+              title="อนิเมะซีซั่นนี้ (Season Now)"
+              data={discovery.anime}
+              onDetailPress={handleDetailPress}
+            />
+          )}
+          {showSeries && (
+            <DiscoverySection
+              title="ซีรีส์มาใหม่ (On The Air)"
+              data={discovery.series}
+              onDetailPress={handleDetailPress}
+            />
+          )}
+          {showTokusatsu && (
+            <DiscoverySection
+              title="โทคุซัทสึ"
+              data={discovery.tokusatsu}
+              onDetailPress={handleDetailPress}
+            />
+          )}
+          {!hasVisibleSections && (
+            <EmptyState
+              icon="filter-outline"
+              title="ไม่มีรายการในหมวดหมู่นี้"
+              subtitle="ลองเลือกหมวดหมู่อื่น"
+            />
+          )}
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>ไม่เจอเรื่องที่ต้องการ?</Text>
             <GradientButton
@@ -213,9 +272,9 @@ export default function SearchScreen() {
     if (results.length === 0) {
       return (
         <EmptyState
-          icon="alert-circle-outline"
+          icon="search-outline"
           title="ไม่พบผลลัพธ์"
-          subtitle={`ไม่พบ "${query}" จาก API`}
+          subtitle={`ไม่พบ "${query}" จากแหล่งข้อมูล`}
         >
           <GradientButton
             title="เพิ่มรายการเอง"
@@ -239,6 +298,7 @@ export default function SearchScreen() {
     handleDetailPress,
     handleAddCustom,
     query,
+    activeFilter,
   ]);
 
   const renderFooter = useCallback(() => {
@@ -266,7 +326,7 @@ export default function SearchScreen() {
         data={results}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        extraData={items}
+        extraData={[items, activeFilter]}
         ListHeaderComponent={
           <SearchHeader
             query={query}
@@ -288,6 +348,14 @@ export default function SearchScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         removeClippedSubviews={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={Accent.primary}
+            colors={[Accent.primary]}
+          />
+        }
       />
 
       <TouchableOpacity
@@ -334,14 +402,8 @@ const styles = StyleSheet.create({
     color: Colors.dark.textMuted,
   },
   loadingContainer: {
-    paddingVertical: Spacing.xxl,
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  loadingText: {
-    fontSize: FontSize.sm,
-    fontFamily: FontFamily.regular,
-    color: Colors.dark.textMuted,
+    paddingTop: Spacing.md,
+    gap: Spacing.sm,
   },
   listContent: {
     paddingBottom: 100,

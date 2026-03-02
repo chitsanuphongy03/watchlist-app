@@ -76,12 +76,16 @@ export interface JikanAnimeResult {
   mal_id: number;
   title: string;
   title_japanese?: string;
-  images: {
-    jpg: {
-      image_url: string;
-      large_image_url: string;
-    };
-  };
+  images?: {
+    jpg?: {
+      image_url?: string | null;
+      large_image_url?: string | null;
+    } | null;
+    webp?: {
+      image_url?: string | null;
+      large_image_url?: string | null;
+    } | null;
+  } | null;
   synopsis: string | null;
   episodes: number | null;
   status: string;
@@ -89,7 +93,7 @@ export interface JikanAnimeResult {
     from: string | null;
     to: string | null;
   };
-  genres: { mal_id: number; name: string }[];
+  genres?: { mal_id: number; name: string }[] | null;
 }
 
 export interface JikanSearchResponse {

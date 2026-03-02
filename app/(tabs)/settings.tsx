@@ -9,7 +9,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, type IoniconsName } from "@/components/icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -152,7 +152,7 @@ export default function SettingsScreen() {
     onPress,
     subtitle,
   }: {
-    icon: string;
+    icon: IoniconsName;
     label: string;
     right: React.ReactNode;
     onPress?: () => void;
@@ -166,7 +166,7 @@ export default function SettingsScreen() {
     >
       <View style={styles.rowLeft}>
         <Ionicons
-          name={icon as any}
+          name={icon}
           size={20}
           color={Accent.primary}
           style={styles.rowIcon}

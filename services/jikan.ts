@@ -1,37 +1,106 @@
-import { JIKAN_BASE_URL, JIKAN_RATE_LIMIT_MS } from "@/constants/api";
+import {
+  ENDPOINTS,
+  JIKAN_BASE_URL,
+  RATE_LIMITS,
+  API_ERRORS,
+} from "@/constants/api";
+import { PAGINATION, TIMEOUTS } from "@/constants/config";
 import type {
-    JikanAnimeResult,
-    JikanSearchResponse,
-    SearchResult,
+  JikanAnimeResult,
+  JikanSearchResponse,
+  SearchResult,
 } from "@/types";
+import {
+  ApiRequestError,
+  fetchWithTimeout,
+  RateLimiter,
+  withRetry,
+} from "./api-client";
 
-let lastRequestTime = 0;
+const rateLimiter = new RateLimiter(RATE_LIMITS.JIKAN);
 
-async function rateLimitedFetch(url: string): Promise<Response> {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-
-  if (timeSinceLastRequest < JIKAN_RATE_LIMIT_MS) {
-    await new Promise((resolve) =>
-      setTimeout(resolve, JIKAN_RATE_LIMIT_MS - timeSinceLastRequest),
-    );
-  }
-
-  lastRequestTime = Date.now();
-  return fetch(url);
+interface FetchOptions {
+  retries?: number;
+  timeout?: number;
 }
 
-function mapJikanToSearchResult(item: JikanAnimeResult): SearchResult {
+async function fetchJikan<T>(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  const { retries = PAGINATION.MAX_RETRIES, timeout = TIMEOUTS.API } = options;
+
+  return withRetry(
+    async () => {
+      await rateLimiter.wait();
+
+      const url = `${JIKAN_BASE_URL}${endpoint}`;
+      const response = await fetchWithTimeout(url, {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "WatchlistApp/1.0",
+        },
+        timeout,
+      });
+
+      if (!response.ok) {
+        throw new ApiRequestError(`Jikan API Error: ${response.status}`, {
+          status: response.status,
+          code: "API_ERROR",
+        });
+      }
+
+      return response.json() as Promise<T>;
+    },
+    {
+      maxRetries: retries,
+      retryDelay: TIMEOUTS.RETRY_DELAY,
+      shouldRetry: (error) => {
+        // Retry on network errors and 5xx errors
+        if (error instanceof ApiRequestError) {
+          return (
+            error.isNetworkError ||
+            error.isTimeout ||
+            (error.status && error.status >= 500) ||
+            false
+          );
+        }
+        return false;
+      },
+    }
+  );
+}
+
+function mapJikanToSearchResult(item: JikanAnimeResult): SearchResult | null {
+  // Validate required fields
+  if (!item || typeof item.mal_id !== "number") {
+    console.warn("[Jikan] Invalid item:", item);
+    return null;
+  }
+
   const year = item.aired?.from
     ? new Date(item.aired.from).getFullYear().toString()
     : undefined;
 
+  // Safely get poster URL with fallbacks
+  let posterUrl: string | undefined;
+  try {
+    posterUrl =
+      item.images?.jpg?.large_image_url ??
+      item.images?.jpg?.image_url ??
+      item.images?.webp?.large_image_url ??
+      item.images?.webp?.image_url ??
+      undefined;
+  } catch {
+    posterUrl = undefined;
+  }
+
   return {
     id: `jikan-${item.mal_id}`,
-    title: item.title,
+    title: item.title || "Unknown Title",
     titleTh: item.title_japanese,
     type: "anime",
-    posterUrl: item.images?.jpg?.large_image_url || item.images?.jpg?.image_url,
+    posterUrl,
     overview: item.synopsis || undefined,
     year,
     genre: item.genres?.map((g) => g.name),
@@ -43,46 +112,57 @@ function mapJikanToSearchResult(item: JikanAnimeResult): SearchResult {
 
 export async function searchAnime(query: string): Promise<SearchResult[]> {
   try {
-    const encoded = encodeURIComponent(query);
-    const url = `${JIKAN_BASE_URL}/anime?q=${encoded}&limit=10&sfw=true`;
+    if (!query.trim()) return [];
 
-    const response = await rateLimitedFetch(url);
-    if (!response.ok) throw new Error(`Jikan Error: ${response.status}`);
+    const encoded = encodeURIComponent(query.trim());
+    const endpoint = `${ENDPOINTS.jikan.searchAnime}?q=${encoded}&limit=${PAGINATION.SEARCH_RESULTS}&sfw=true`;
 
-    const data: JikanSearchResponse = await response.json();
-    return data.data.map(mapJikanToSearchResult);
+    const data = await fetchJikan<JikanSearchResponse>(endpoint);
+    console.log(
+      `[Jikan] searchAnime: found ${data.data?.length || 0} results for "${query}"`
+    );
+
+    return (
+      data.data
+        ?.map(mapJikanToSearchResult)
+        .filter((item): item is SearchResult => item !== null) || []
+    );
   } catch (error) {
-    console.error("Error searching anime:", error);
+    console.error("[Jikan] Error searching anime:", error);
     return [];
   }
 }
 
 export async function getAnimeDetails(
-  malId: string,
+  malId: string
 ): Promise<SearchResult | null> {
   try {
-    const url = `${JIKAN_BASE_URL}/anime/${malId}`;
+    if (!malId) return null;
 
-    const response = await rateLimitedFetch(url);
-    if (!response.ok) throw new Error(`Jikan Error: ${response.status}`);
-
-    const data: { data: JikanAnimeResult } = await response.json();
+    const endpoint = ENDPOINTS.jikan.animeDetails(malId);
+    const data = await fetchJikan<{ data: JikanAnimeResult }>(endpoint);
     return mapJikanToSearchResult(data.data);
   } catch (error) {
-    console.error("Error fetching anime details:", error);
+    console.error("[Jikan] Error fetching anime details:", error);
     return null;
   }
 }
+
 export async function getSeasonNowAnime(): Promise<SearchResult[]> {
   try {
-    const url = `${JIKAN_BASE_URL}/seasons/now?limit=10&sfw=true`;
-    const response = await rateLimitedFetch(url);
-    if (!response.ok) throw new Error(`Jikan Error: ${response.status}`);
+    const endpoint = `${ENDPOINTS.jikan.seasonNow}?limit=${PAGINATION.DISCOVERY_ITEMS}&sfw=true`;
+    console.log("[Jikan] Fetching season now anime...");
 
-    const data: JikanSearchResponse = await response.json();
-    return data.data.map(mapJikanToSearchResult);
+    const data = await fetchJikan<JikanSearchResponse>(endpoint);
+    console.log(`[Jikan] Season now: found ${data.data?.length || 0} anime`);
+
+    return (
+      data.data
+        ?.map(mapJikanToSearchResult)
+        .filter((item): item is SearchResult => item !== null) || []
+    );
   } catch (error) {
-    console.error("Error fetching season now anime:", error);
+    console.error("[Jikan] Error fetching season now anime:", error);
     return [];
   }
 }
