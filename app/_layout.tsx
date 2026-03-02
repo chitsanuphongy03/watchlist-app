@@ -51,6 +51,9 @@ function useProtectedRoute() {
   const isPinSet = useAuthStore((s) => s.isPinSet);
   const isLoading = useAuthStore((s) => s.isLoading);
   const hasNavigated = useRef(false);
+  
+  // Convert segments to string to avoid infinite loop
+  const segmentsKey = segments.join(",");
 
   useEffect(() => {
     if (isLoading) return;
@@ -71,7 +74,7 @@ function useProtectedRoute() {
     } else {
       hasNavigated.current = false;
     }
-  }, [isAuthenticated, isPinSet, isLoading, segments]);
+  }, [isAuthenticated, isPinSet, isLoading, segmentsKey]);
 }
 
 export default function RootLayout() {
