@@ -11,10 +11,9 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
-  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -23,6 +22,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { NumberPickerModal } from "@/components/number-picker-modal";
+import { TimePickerModal } from "@/components/time-picker-modal";
 
 export default function SettingsScreen() {
   const { isBiometricEnabled, toggleBiometric } = useAuthStore();
@@ -37,44 +39,29 @@ export default function SettingsScreen() {
     toggleInactivity,
     setInactivityDays,
     updateReminderSchedule,
+    setReminderTime,
+    setReminderFrequency,
   } = useSettingsStore();
 
   const { getNextItem } = useWatchlistStore();
 
-  const handleSetReminderTime = useCallback(() => {
-    Alert.prompt?.(
-      "ตั้งเวลาเตือน",
-      "ใส่เวลา (เช่น 20:00)",
-      async (time: string) => {
-        if (/^([01]\d|2[0-3]):?([0-5]\d)$/.test(time)) {
-          const formattedTime = time.includes(":")
-            ? time
-            : `${time.slice(0, 2)}:${time.slice(2)}`;
-          await useSettingsStore.getState().setReminderTime(formattedTime);
-          const nextItem = getNextItem();
-          await updateReminderSchedule(nextItem?.title);
-        } else {
-          Alert.alert("ผิดพลาด", "รูปแบบเวลาไม่ถูกต้อง (HH:mm)");
-        }
-      },
-      "plain-text",
-      notificationSettings.reminderTime,
-    );
+  // Modal visibility states
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [daysPickerVisible, setDaysPickerVisible] = useState(false);
 
-    if (Platform.OS === "android") {
-      Alert.alert(
-        "ยังไม่พร้อมใช้งาน",
-        "ขณะนี้ยังไม่สามารถเปลี่ยนเวลาเตือนได้บน Android",
-      );
-    }
-  }, [notificationSettings.reminderTime, getNextItem, updateReminderSchedule]);
+  const handleSetReminderTime = useCallback(async (time: string) => {
+    await setReminderTime(time);
+    const nextItem = getNextItem();
+    await updateReminderSchedule(nextItem?.title);
+    setTimePickerVisible(false);
+  }, [getNextItem, setReminderTime, updateReminderSchedule]);
 
   const handleSetReminderFrequency = useCallback(() => {
     Alert.alert("ความถี่ในการเตือน", "เลือกความถี่ที่ต้องการ", [
       {
         text: "ทุกวัน",
         onPress: async () => {
-          await useSettingsStore.getState().setReminderFrequency("daily");
+          await setReminderFrequency("daily");
           const nextItem = getNextItem();
           await updateReminderSchedule(nextItem?.title);
         },
@@ -82,46 +69,31 @@ export default function SettingsScreen() {
       {
         text: "ทุกสัปดาห์",
         onPress: async () => {
-          await useSettingsStore.getState().setReminderFrequency("weekly");
+          await setReminderFrequency("weekly");
           const nextItem = getNextItem();
           await updateReminderSchedule(nextItem?.title);
         },
       },
       { text: "ยกเลิก", style: "cancel" },
     ]);
-  }, [getNextItem, updateReminderSchedule]);
+  }, [getNextItem, setReminderFrequency, updateReminderSchedule]);
 
-  const handleSetInactivityDays = useCallback(() => {
-    Alert.prompt?.(
-      "จำนวนวันที่ไม่ได้เปิดแอป",
-      "แจ้งเตือนหลังจากไม่ได้เปิดแอปเป็นเวลา (วัน)",
-      async (days: string) => {
-        const d = parseInt(days, 10);
-        if (!isNaN(d) && d > 0) {
-          await setInactivityDays(d);
-        } else {
-          Alert.alert("ผิดพลาด", "กรุณาใส่จำนวนวันให้ถูกต้อง");
-        }
-      },
-      "plain-text" as any,
-      notificationSettings.inactivityDays.toString(),
-    );
-
-    if (Platform.OS === "android") {
-      Alert.alert(
-        "ยังไม่พร้อมใช้งาน",
-        "ขณะนี้ยังไม่สามารถเปลี่ยนจำนวนวันได้บน Android",
-      );
-    }
-  }, [notificationSettings.inactivityDays, setInactivityDays]);
+  const handleSetInactivityDays = useCallback(async (days: number) => {
+    await setInactivityDays(days);
+    setDaysPickerVisible(false);
+  }, [setInactivityDays]);
 
   const handleReminderRowPress = useCallback(() => {
     Alert.alert("ตั้งค่าการเตือน", "เลือกหัวข้อที่ต้องการแก้ไข", [
-      { text: "เปลี่ยนเวลา", onPress: handleSetReminderTime },
+      { text: "เปลี่ยนเวลา", onPress: () => setTimePickerVisible(true) },
       { text: "เปลี่ยนความถี่", onPress: handleSetReminderFrequency },
       { text: "ยกเลิก", style: "cancel" },
     ]);
-  }, [handleSetReminderTime, handleSetReminderFrequency]);
+  }, [handleSetReminderFrequency]);
+
+  const handleInactivityRowPress = useCallback(() => {
+    setDaysPickerVisible(true);
+  }, []);
 
   useEffect(() => {
     initSettings();
@@ -339,7 +311,7 @@ export default function SettingsScreen() {
                     }
                   />
                 }
-                onPress={handleSetInactivityDays}
+                onPress={handleInactivityRowPress}
                 subtitle={`หลังจาก ${notificationSettings.inactivityDays} วัน`}
               />
             </>
@@ -362,6 +334,26 @@ export default function SettingsScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Time Picker Modal */}
+      <TimePickerModal
+        visible={timePickerVisible}
+        initialTime={notificationSettings.reminderTime}
+        onConfirm={handleSetReminderTime}
+        onCancel={() => setTimePickerVisible(false)}
+      />
+
+      {/* Days Picker Modal */}
+      <NumberPickerModal
+        visible={daysPickerVisible}
+        initialValue={notificationSettings.inactivityDays}
+        title="จำนวนวันที่ไม่ได้เปิดแอป"
+        subtitle="แจ้งเตือนหลังจากไม่ได้เปิดแอปเป็นเวลา (วัน)"
+        min={1}
+        max={365}
+        onConfirm={handleSetInactivityDays}
+        onCancel={() => setDaysPickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
