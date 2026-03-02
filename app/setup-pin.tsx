@@ -22,7 +22,7 @@ export default function SetupPinScreen() {
   const [pin, setPin] = useState("");
   const [firstPin, setFirstPin] = useState("");
   const [error, setError] = useState(false);
-  const { setupPin } = useAuthStore();
+  const setupPin = useAuthStore(useCallback((s) => s.setupPin, []));
 
   const handlePinChange = useCallback(
     async (newPin: string) => {

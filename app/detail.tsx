@@ -1,13 +1,13 @@
 import { StatusToggle } from "@/components/status-toggle";
 import {
-  Accent,
-  Colors,
-  ContentTypeLabel,
-  FontFamily,
-  FontSize,
-  Radius,
-  Shadow,
-  Spacing,
+    Accent,
+    Colors,
+    ContentTypeLabel,
+    FontFamily,
+    FontSize,
+    Radius,
+    Shadow,
+    Spacing,
 } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { SearchResult, WatchlistItem, WatchStatus } from "@/types";
@@ -17,12 +17,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { useUIStore } from "@/stores/ui-store";
@@ -36,8 +36,14 @@ export default function DetailScreen() {
     id: string;
     item: string;
   }>();
-  const { items, updateStatus, removeItem, addItem } = useWatchlistStore();
-  const { showAlert, showToast } = useUIStore();
+  const items = useWatchlistStore(useCallback((s) => s.items, []));
+  const updateStatus = useWatchlistStore(
+    useCallback((s) => s.updateStatus, []),
+  );
+  const removeItem = useWatchlistStore(useCallback((s) => s.removeItem, []));
+  const addItem = useWatchlistStore(useCallback((s) => s.addItem, []));
+  const showAlert = useUIStore(useCallback((s) => s.showAlert, []));
+  const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
   const watchlistMatch = useMemo(() => {
     const exactMatch = items.find((i) => i.id === id);

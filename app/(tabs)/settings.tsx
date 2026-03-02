@@ -1,25 +1,25 @@
+import { Ionicons, type IoniconsName } from "@/components/icons";
 import {
-  Accent,
-  Colors,
-  FontFamily,
-  FontSize,
-  Radius,
-  Spacing,
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Radius,
+    Spacing,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
-import { Ionicons, type IoniconsName } from "@/components/icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,34 +27,60 @@ import { NumberPickerModal } from "@/components/number-picker-modal";
 import { TimePickerModal } from "@/components/time-picker-modal";
 
 export default function SettingsScreen() {
-  const { isBiometricEnabled, toggleBiometric } = useAuthStore();
+  const isBiometricEnabled = useAuthStore(
+    useCallback((s) => s.isBiometricEnabled, []),
+  );
+  const toggleBiometric = useAuthStore(
+    useCallback((s) => s.toggleBiometric, []),
+  );
 
-  const {
-    notificationSettings,
-    initialize: initSettings,
-    requestNotificationPermission,
-    toggleNotifications,
-    toggleNextItemNotification,
-    toggleReminder,
-    toggleInactivity,
-    setInactivityDays,
-    updateReminderSchedule,
-    setReminderTime,
-    setReminderFrequency,
-  } = useSettingsStore();
+  const notificationSettings = useSettingsStore(
+    useCallback((s) => s.notificationSettings, []),
+  );
+  const initSettings = useSettingsStore(useCallback((s) => s.initialize, []));
+  const requestNotificationPermission = useSettingsStore(
+    useCallback((s) => s.requestNotificationPermission, []),
+  );
+  const toggleNotifications = useSettingsStore(
+    useCallback((s) => s.toggleNotifications, []),
+  );
+  const toggleNextItemNotification = useSettingsStore(
+    useCallback((s) => s.toggleNextItemNotification, []),
+  );
+  const toggleReminder = useSettingsStore(
+    useCallback((s) => s.toggleReminder, []),
+  );
+  const toggleInactivity = useSettingsStore(
+    useCallback((s) => s.toggleInactivity, []),
+  );
+  const setInactivityDays = useSettingsStore(
+    useCallback((s) => s.setInactivityDays, []),
+  );
+  const updateReminderSchedule = useSettingsStore(
+    useCallback((s) => s.updateReminderSchedule, []),
+  );
+  const setReminderTime = useSettingsStore(
+    useCallback((s) => s.setReminderTime, []),
+  );
+  const setReminderFrequency = useSettingsStore(
+    useCallback((s) => s.setReminderFrequency, []),
+  );
 
-  const { getNextItem } = useWatchlistStore();
+  const getNextItem = useWatchlistStore(useCallback((s) => s.getNextItem, []));
 
   // Modal visibility states
   const [timePickerVisible, setTimePickerVisible] = useState(false);
   const [daysPickerVisible, setDaysPickerVisible] = useState(false);
 
-  const handleSetReminderTime = useCallback(async (time: string) => {
-    await setReminderTime(time);
-    const nextItem = getNextItem();
-    await updateReminderSchedule(nextItem?.title);
-    setTimePickerVisible(false);
-  }, [getNextItem, setReminderTime, updateReminderSchedule]);
+  const handleSetReminderTime = useCallback(
+    async (time: string) => {
+      await setReminderTime(time);
+      const nextItem = getNextItem();
+      await updateReminderSchedule(nextItem?.title);
+      setTimePickerVisible(false);
+    },
+    [getNextItem, setReminderTime, updateReminderSchedule],
+  );
 
   const handleSetReminderFrequency = useCallback(() => {
     Alert.alert("ความถี่ในการเตือน", "เลือกความถี่ที่ต้องการ", [
@@ -78,10 +104,13 @@ export default function SettingsScreen() {
     ]);
   }, [getNextItem, setReminderFrequency, updateReminderSchedule]);
 
-  const handleSetInactivityDays = useCallback(async (days: number) => {
-    await setInactivityDays(days);
-    setDaysPickerVisible(false);
-  }, [setInactivityDays]);
+  const handleSetInactivityDays = useCallback(
+    async (days: number) => {
+      await setInactivityDays(days);
+      setDaysPickerVisible(false);
+    },
+    [setInactivityDays],
+  );
 
   const handleReminderRowPress = useCallback(() => {
     Alert.alert("ตั้งค่าการเตือน", "เลือกหัวข้อที่ต้องการแก้ไข", [

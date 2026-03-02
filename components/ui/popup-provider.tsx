@@ -10,7 +10,7 @@ import {
 import { useUIStore } from "@/stores/ui-store";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import React from "react";
+import React, { useCallback } from "react";
 import {
     Modal,
     Pressable,
@@ -28,7 +28,9 @@ import Animated, {
 } from "react-native-reanimated";
 
 export function PopupProvider() {
-  const { alert, toast, hideAlert } = useUIStore();
+  const alert = useUIStore(useCallback((s) => s.alert, []));
+  const toast = useUIStore(useCallback((s) => s.toast, []));
+  const hideAlert = useUIStore(useCallback((s) => s.hideAlert, []));
 
   return (
     <>

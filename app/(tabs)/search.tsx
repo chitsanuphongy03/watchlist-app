@@ -1,12 +1,12 @@
 import { DiscoverySection } from "@/components/discovery-section";
 import { EmptyState } from "@/components/empty-state";
 import { GradientButton } from "@/components/gradient-button";
+import { SearchBar } from "@/components/search-bar";
+import { SearchResultCard } from "@/components/search-result-card";
 import {
   DiscoverySectionSkeleton,
   SearchResultCardSkeleton,
 } from "@/components/skeleton";
-import { SearchBar } from "@/components/search-bar";
-import { SearchResultCard } from "@/components/search-result-card";
 import { TypeFilter } from "@/components/type-filter";
 
 import {
@@ -76,7 +76,7 @@ const SearchHeader = React.memo(
         )}
       </View>
     );
-  }
+  },
 );
 SearchHeader.displayName = "SearchHeader";
 
@@ -104,30 +104,34 @@ function DiscoveryLoading() {
 export default function SearchScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
-  const {
-    query,
-    results,
-    isLoading,
-    activeFilter,
-    hasSearched,
-    discovery,
-    isDiscoveryLoading,
-    setActiveFilter,
-    debouncedSearch,
-    clearResults,
-    fetchDiscovery,
-  } = useSearchStore();
+  const query = useSearchStore(useCallback((s) => s.query, []));
+  const results = useSearchStore(useCallback((s) => s.results, []));
+  const isLoading = useSearchStore(useCallback((s) => s.isLoading, []));
+  const activeFilter = useSearchStore(useCallback((s) => s.activeFilter, []));
+  const hasSearched = useSearchStore(useCallback((s) => s.hasSearched, []));
+  const discovery = useSearchStore(useCallback((s) => s.discovery, []));
+  const isDiscoveryLoading = useSearchStore(
+    useCallback((s) => s.isDiscoveryLoading, []),
+  );
+  const setActiveFilter = useSearchStore(
+    useCallback((s) => s.setActiveFilter, []),
+  );
+  const debouncedSearch = useSearchStore(
+    useCallback((s) => s.debouncedSearch, []),
+  );
+  const clearResults = useSearchStore(useCallback((s) => s.clearResults, []));
+  const fetchDiscovery = useSearchStore(
+    useCallback((s) => s.fetchDiscovery, []),
+  );
 
   const items = useWatchlistStore(useCallback((state) => state.items, []));
   const addItem = useWatchlistStore(useCallback((state) => state.addItem, []));
   const isInWatchlist = useWatchlistStore(
     useCallback(
       (state) => (sourceId: string, source: string) =>
-        state.items.some(
-          (i) => i.sourceId === sourceId && i.source === source
-        ),
-      []
-    )
+        state.items.some((i) => i.sourceId === sourceId && i.source === source),
+      [],
+    ),
   );
 
   useEffect(() => {
@@ -148,7 +152,7 @@ export default function SearchScreen() {
         debouncedSearch(text);
       }
     },
-    [debouncedSearch, clearResults]
+    [debouncedSearch, clearResults],
   );
 
   const handleClear = useCallback(() => {
@@ -159,10 +163,10 @@ export default function SearchScreen() {
     (filter: ContentFilter) => {
       setActiveFilter(filter);
     },
-    [setActiveFilter]
+    [setActiveFilter],
   );
 
-  const { showToast } = useUIStore();
+  const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
   const handleAddToWatchlist = useCallback(
     async (item: SearchResult) => {
@@ -173,7 +177,7 @@ export default function SearchScreen() {
       await addItem(item);
       showToast({ message: `เพิ่ม "${item.title}" แล้ว `, type: "success" });
     },
-    [addItem, isInWatchlist, showToast]
+    [addItem, isInWatchlist, showToast],
   );
 
   const handleAddCustom = useCallback(() => {
@@ -189,7 +193,7 @@ export default function SearchScreen() {
         />
       </Animated.View>
     ),
-    [handleAddToWatchlist]
+    [handleAddToWatchlist],
   );
 
   const handleDetailPress = useCallback((item: SearchResult) => {

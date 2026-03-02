@@ -1,12 +1,12 @@
 import { GradientButton } from "@/components/gradient-button";
 import {
-  Accent,
-  Colors,
-  ContentTypeLabel,
-  FontFamily,
-  FontSize,
-  Radius,
-  Spacing,
+    Accent,
+    Colors,
+    ContentTypeLabel,
+    FontFamily,
+    FontSize,
+    Radius,
+    Spacing,
 } from "@/constants/theme";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { ContentType } from "@/types";
@@ -15,15 +15,15 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,8 +37,10 @@ export default function AddCustomScreen() {
   const [note, setNote] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addCustomItem } = useWatchlistStore();
-  const { showToast } = useUIStore();
+  const addCustomItem = useWatchlistStore(
+    useCallback((s) => s.addCustomItem, []),
+  );
+  const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

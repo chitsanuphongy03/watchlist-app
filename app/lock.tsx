@@ -18,12 +18,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function LockScreen() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
-  const {
-    verifyPin,
-    authenticateWithBiometric,
-    isBiometricEnabled,
-    isBiometricAvailable,
-  } = useAuthStore();
+  const verifyPin = useAuthStore(useCallback((s) => s.verifyPin, []));
+  const authenticateWithBiometric = useAuthStore(
+    useCallback((s) => s.authenticateWithBiometric, []),
+  );
+  const isBiometricEnabled = useAuthStore(
+    useCallback((s) => s.isBiometricEnabled, []),
+  );
+  const isBiometricAvailable = useAuthStore(
+    useCallback((s) => s.isBiometricAvailable, []),
+  );
 
   const showBiometricButton = isBiometricAvailable;
 

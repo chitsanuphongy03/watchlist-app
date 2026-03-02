@@ -1,11 +1,11 @@
 import { PinPad } from "@/components/pin-pad";
 import {
-  Accent,
-  Colors,
-  FontFamily,
-  FontSize,
-  Radius,
-  Spacing,
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Radius,
+    Spacing,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,7 +25,8 @@ export default function ChangePinScreen() {
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { verifyPin, setupPin } = useAuthStore();
+  const verifyPin = useAuthStore(useCallback((s) => s.verifyPin, []));
+  const setupPin = useAuthStore(useCallback((s) => s.setupPin, []));
 
   const handlePinChange = useCallback(
     async (input: string) => {
@@ -60,8 +61,6 @@ export default function ChangePinScreen() {
             setError(true);
             setErrorMessage("PIN ไม่ตรงกัน กรุณาลองใหม่");
             setTimeout(() => {
-              setPin("");
-              setError(false);
               setPin("");
               setError(false);
             }, 500);
