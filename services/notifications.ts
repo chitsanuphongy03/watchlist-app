@@ -1,18 +1,34 @@
 import type { ReminderFrequency } from "@/types";
+import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () =>
-    ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }) as Notifications.NotificationBehavior,
-});
+// Check if running inside Expo Go (push notifications not supported since SDK 53)
+function isExpoGo(): boolean {
+  return Constants.appOwnership === "expo";
+}
+
+// Only set up notification handler if NOT in Expo Go
+if (!isExpoGo()) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () =>
+      ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }) as Notifications.NotificationBehavior,
+  });
+}
 
 export async function requestPermissions(): Promise<boolean> {
+  if (isExpoGo()) {
+    console.warn(
+      "Push notifications are not supported in Expo Go (SDK 53+). Use a development build.",
+    );
+    return false;
+  }
+
   if (!Device.isDevice) {
     console.warn("Push notifications require a physical device");
     return false;
@@ -42,6 +58,7 @@ export async function scheduleNextItemNotification(
   completedTitle: string,
   nextTitle: string,
 ): Promise<void> {
+  if (isExpoGo()) return;
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -64,6 +81,7 @@ export async function scheduleReminder(
   time: string,
   frequency: ReminderFrequency,
 ): Promise<void> {
+  if (isExpoGo()) return;
   try {
     await cancelNotificationsByType("reminder");
 
@@ -103,6 +121,7 @@ export async function scheduleReminder(
 }
 
 export async function scheduleInactivityReminder(days: number): Promise<void> {
+  if (isExpoGo()) return;
   try {
     await cancelNotificationsByType("inactivity");
 
@@ -123,6 +142,7 @@ export async function scheduleInactivityReminder(days: number): Promise<void> {
 }
 
 export async function cancelNotificationsByType(type: string): Promise<void> {
+  if (isExpoGo()) return;
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const notification of scheduled) {
@@ -138,6 +158,7 @@ export async function cancelNotificationsByType(type: string): Promise<void> {
 }
 
 export async function cancelAllNotifications(): Promise<void> {
+  if (isExpoGo()) return;
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {

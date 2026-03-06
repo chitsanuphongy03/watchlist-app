@@ -1,23 +1,23 @@
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Radius,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    FlatList,
-    Modal,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const ITEM_HEIGHT = 44;
@@ -111,6 +111,7 @@ function ScrollPicker({ data, selectedIndex, onSelect }: ScrollPickerProps) {
         decelerationRate="fast"
         onMomentumScrollEnd={handleScrollEnd}
         onScrollBeginDrag={handleScrollBegin}
+        nestedScrollEnabled
         contentContainerStyle={{
           paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
         }}
@@ -158,10 +159,7 @@ export function TimePickerModal({
       onRequestClose={onCancel}
     >
       <Pressable style={styles.overlay} onPress={onCancel}>
-        <Pressable
-          style={styles.container}
-          onPress={(e) => e.stopPropagation()}
-        >
+        <View style={styles.container} onStartShouldSetResponder={() => true}>
           <View style={styles.header}>
             <Text style={styles.title}>ตั้งเวลาเตือน</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -197,7 +195,7 @@ export function TimePickerModal({
           >
             <Text style={styles.confirmButtonText}>ตกลง</Text>
           </TouchableOpacity>
-        </Pressable>
+        </View>
       </Pressable>
     </Modal>
   );

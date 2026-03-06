@@ -4,27 +4,27 @@ import { GradientButton } from "@/components/gradient-button";
 import { SearchBar } from "@/components/search-bar";
 import { SearchResultCard } from "@/components/search-result-card";
 import {
-    DiscoverySectionSkeleton,
-    SearchResultCardSkeleton,
+  DiscoverySectionSkeleton,
+  SearchResultCardSkeleton,
 } from "@/components/skeleton";
 import { TypeFilter } from "@/components/type-filter";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Spacing,
 } from "@/constants/theme";
 import { getSeasonNowAnime, searchAnime } from "@/services/jikan";
 import {
-    getNowPlayingMovies,
-    getOnTheAirSeries,
-    searchMovies,
-    searchSeries,
-    searchTokusatsu,
-    searchAll as tmdbSearchAll,
+  getNowPlayingMovies,
+  getOnTheAirSeries,
+  searchMovies,
+  searchSeries,
+  searchTokusatsu,
+  searchAll as tmdbSearchAll,
 } from "@/services/tmdb";
 import { useSearchStore } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -34,12 +34,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -271,24 +271,25 @@ export default function SearchScreen() {
     router.push("/add-custom");
   }, []);
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: SearchResult; index: number }) => (
-      <Animated.View entering={FadeInDown.delay(index * 30).duration(200)}>
-        <SearchResultCard
-          item={item}
-          onAdd={() => handleAddToWatchlist(item)}
-        />
-      </Animated.View>
-    ),
-    [handleAddToWatchlist],
-  );
-
   const handleDetailPress = useCallback((item: SearchResult) => {
     router.push({
       pathname: "/detail",
       params: { sourceId: item.sourceId, source: item.source, type: item.type },
     });
   }, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: SearchResult; index: number }) => (
+      <Animated.View entering={FadeInDown.delay(index * 30).duration(200)}>
+        <SearchResultCard
+          item={item}
+          onPress={() => handleDetailPress(item)}
+          onAdd={() => handleAddToWatchlist(item)}
+        />
+      </Animated.View>
+    ),
+    [handleAddToWatchlist, handleDetailPress],
+  );
 
   const renderContent = useCallback(() => {
     if (isSearchLoading && hasSearched) {

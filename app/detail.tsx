@@ -10,8 +10,14 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { getAnimeDetails } from "@/services/jikan";
+import { getTmdbDetails } from "@/services/tmdb";
 import { useWatchlistStore } from "@/stores/watchlist-store";
-import type { SearchResult, WatchlistItem, WatchStatus } from "@/types";
+import type {
+  ContentType,
+  SearchResult,
+  WatchlistItem,
+  WatchStatus,
+} from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -42,10 +48,11 @@ const POSTER_WIDTH = width * 0.4;
 const POSTER_HEIGHT = POSTER_WIDTH * 1.5;
 
 export default function DetailScreen() {
-  const { id, sourceId, source } = useLocalSearchParams<{
+  const { id, sourceId, source, type } = useLocalSearchParams<{
     id: string;
     sourceId: string;
     source: string;
+    type: string;
   }>();
   const items = useWatchlistStore(useCallback((s) => s.items, []));
   const updateStatus = useWatchlistStore(
@@ -81,6 +88,8 @@ export default function DetailScreen() {
     queryFn: async () => {
       if (source === "jikan") {
         return await getAnimeDetails(sourceId);
+      } else if (source === "tmdb") {
+        return await getTmdbDetails(sourceId, (type as ContentType) || "movie");
       }
       return null;
     },

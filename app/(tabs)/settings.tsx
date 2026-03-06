@@ -11,6 +11,7 @@ import { clearAppCache, getCacheSizeInMB } from "@/services/cache";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
+import Constants from "expo-constants";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -214,9 +215,13 @@ export default function SettingsScreen() {
       if (enabled) {
         const granted = await requestNotificationPermission();
         if (!granted) {
+          // Check if running in Expo Go
+          const isExpoGo = Constants.appOwnership === "expo";
           Alert.alert(
-            "ไม่ได้รับอนุญาต",
-            "กรุณาเปิดการแจ้งเตือนในตั้งค่าเครื่อง",
+            isExpoGo ? "ไม่รองรับบน Expo Go" : "ไม่ได้รับอนุญาต",
+            isExpoGo
+              ? "การแจ้งเตือนไม่รองรับบน Expo Go (SDK 53+) กรุณาใช้ Development Build แทน"
+              : "กรุณาเปิดการแจ้งเตือนในตั้งค่าเครื่อง",
             [{ text: "ตกลง" }],
           );
           return;

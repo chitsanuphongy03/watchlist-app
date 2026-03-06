@@ -15,11 +15,15 @@ export function validateApiKeys(): void {
   if (!TMDB_API_KEY || TMDB_API_KEY.trim() === "") {
     console.error("❌ TMDB_API_KEY is not set!");
     console.error("   Please set EXPO_PUBLIC_TMDB_API_KEY in your .env file");
-    console.error("   Get your API key at: https://www.themoviedb.org/settings/api");
-    
+    console.error(
+      "   Get your API key at: https://www.themoviedb.org/settings/api",
+    );
+
     // In development, show warning but don't crash
     if (__DEV__) {
-      console.warn("⚠️  Running without TMDB API key. Some features may not work.");
+      console.warn(
+        "⚠️  Running without TMDB API key. Some features may not work.",
+      );
     }
   }
 }
@@ -60,6 +64,8 @@ export const ENDPOINTS = {
     searchMulti: "/search/multi",
     movieNowPlaying: "/movie/now_playing",
     tvOnTheAir: "/tv/on_the_air",
+    movieDetails: (id: string) => `/movie/${id}`,
+    tvDetails: (id: string) => `/tv/${id}`,
   },
   jikan: {
     searchAnime: "/anime",

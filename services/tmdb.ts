@@ -1,25 +1,24 @@
 import {
-  ENDPOINTS,
-  isTmdbApiKeyAvailable,
-  TMDB_API_KEY,
-  TMDB_BASE_URL,
-  TMDB_IMAGE_BASE_URL,
-  TMDB_POSTER_SIZE,
-  RATE_LIMITS,
-  API_ERRORS,
+    ENDPOINTS,
+    isTmdbApiKeyAvailable,
+    RATE_LIMITS,
+    TMDB_API_KEY,
+    TMDB_BASE_URL,
+    TMDB_IMAGE_BASE_URL,
+    TMDB_POSTER_SIZE
 } from "@/constants/api";
 import { PAGINATION, TIMEOUTS } from "@/constants/config";
 import type {
-  ContentType,
-  SearchResult,
-  TMDBSearchResponse,
-  TMDBSearchResult,
+    ContentType,
+    SearchResult,
+    TMDBSearchResponse,
+    TMDBSearchResult,
 } from "@/types";
 import {
-  ApiRequestError,
-  fetchWithTimeout,
-  RateLimiter,
-  withRetry,
+    ApiRequestError,
+    fetchWithTimeout,
+    RateLimiter,
+    withRetry,
 } from "./api-client";
 
 const rateLimiter = new RateLimiter(RATE_LIMITS.TMDB);
@@ -32,7 +31,7 @@ interface FetchOptions {
 async function fetchTMDB<T>(
   endpoint: string,
   params: Record<string, string> = {},
-  options: FetchOptions = {}
+  options: FetchOptions = {},
 ): Promise<T | null> {
   // Check if API key is available
   if (!isTmdbApiKeyAvailable()) {
@@ -79,7 +78,7 @@ async function fetchTMDB<T>(
         }
         return false;
       },
-    }
+    },
   );
 }
 
@@ -90,7 +89,7 @@ function getPosterUrl(posterPath: string | null): string | undefined {
 
 function mapTMDBToSearchResult(
   item: TMDBSearchResult,
-  type: ContentType
+  type: ContentType,
 ): SearchResult {
   return {
     id: `tmdb-${item.id}`,
@@ -110,7 +109,7 @@ export async function searchMovies(query: string): Promise<SearchResult[]> {
 
     const data = await fetchTMDB<TMDBSearchResponse>(
       ENDPOINTS.tmdb.searchMovie,
-      { query: query.trim() }
+      { query: query.trim() },
     );
 
     if (!data) return [];
@@ -126,15 +125,14 @@ export async function searchMovies(query: string): Promise<SearchResult[]> {
 
 export async function searchSeries(
   query: string,
-  type: "series" | "tokusatsu" = "series"
+  type: "series" | "tokusatsu" = "series",
 ): Promise<SearchResult[]> {
   try {
     if (!query.trim()) return [];
 
-    const data = await fetchTMDB<TMDBSearchResponse>(
-      ENDPOINTS.tmdb.searchTv,
-      { query: query.trim() }
-    );
+    const data = await fetchTMDB<TMDBSearchResponse>(ENDPOINTS.tmdb.searchTv, {
+      query: query.trim(),
+    });
 
     if (!data) return [];
 
@@ -153,21 +151,19 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
 
     const data = await fetchTMDB<TMDBSearchResponse>(
       ENDPOINTS.tmdb.searchMulti,
-      { query: query.trim() }
+      { query: query.trim() },
     );
 
     if (!data) return [];
 
     return data.results
-      .filter(
-        (item) => item.media_type === "movie" || item.media_type === "tv"
-      )
+      .filter((item) => item.media_type === "movie" || item.media_type === "tv")
       .slice(0, PAGINATION.SEARCH_RESULTS)
       .map((item) =>
         mapTMDBToSearchResult(
           item,
-          item.media_type === "movie" ? "movie" : "series"
-        )
+          item.media_type === "movie" ? "movie" : "series",
+        ),
       );
   } catch (error) {
     console.error("Error searching TMDB:", error);
@@ -179,7 +175,7 @@ export async function getNowPlayingMovies(): Promise<SearchResult[]> {
   try {
     const data = await fetchTMDB<TMDBSearchResponse>(
       ENDPOINTS.tmdb.movieNowPlaying,
-      { page: "1" }
+      { page: "1" },
     );
 
     if (!data) return [];
@@ -197,7 +193,7 @@ export async function getOnTheAirSeries(): Promise<SearchResult[]> {
   try {
     const data = await fetchTMDB<TMDBSearchResponse>(
       ENDPOINTS.tmdb.tvOnTheAir,
-      { page: "1" }
+      { page: "1" },
     );
 
     if (!data) return [];
@@ -231,5 +227,45 @@ export async function searchTokusatsu(): Promise<SearchResult[]> {
   } catch (error) {
     console.error("Error searching tokusatsu:", error);
     return [];
+  }
+}
+
+export async function getTmdbDetails(
+  id: string,
+  type: ContentType,
+): Promise<SearchResult | null> {
+  try {
+    if (!id) return null;
+
+    const endpoint =
+      type === "movie"
+        ? ENDPOINTS.tmdb.movieDetails(id)
+        : ENDPOINTS.tmdb.tvDetails(id);
+
+    // Use any as detail response has more fields than TMDBSearchResult
+    const data = await fetchTMDB<any>(endpoint);
+
+    if (!data) return null;
+
+    const year = (data.release_date || data.first_air_date || "").substring(
+      0,
+      4,
+    );
+
+    return {
+      id: `tmdb-${data.id}`,
+      title: data.title || data.name || "Unknown",
+      type: type,
+      posterUrl: getPosterUrl(data.poster_path),
+      overview: data.overview,
+      year: year,
+      genre: data.genres?.map((g: any) => g.name),
+      episodes: data.number_of_episodes,
+      source: "tmdb",
+      sourceId: data.id.toString(),
+    };
+  } catch (error) {
+    console.error(`Error fetching TMDB details for ${type} ${id}:`, error);
+    return null;
   }
 }
