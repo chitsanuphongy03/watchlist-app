@@ -13,6 +13,7 @@ import { getAnimeDetails } from "@/services/jikan";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { SearchResult, WatchlistItem, WatchStatus } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -56,10 +57,6 @@ export default function DetailScreen() {
   const showAlert = useUIStore(useCallback((s) => s.showAlert, []));
   const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
-  // State for API-fetched items (when viewing from search/discovery)
-  const [fetchedItem, setFetchedItem] = useState<SearchResult | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
-
   // Note editing state
   const [noteText, setNoteText] = useState("");
   const [isEditingNote, setIsEditingNote] = useState(false);
@@ -79,26 +76,16 @@ export default function DetailScreen() {
   }, [items, id, sourceId, source]);
 
   // Fetch from API if not in watchlist and we have sourceId+source
-  useEffect(() => {
-    if (watchlistMatch || !sourceId || !source) return;
-
-    const fetchItem = async () => {
-      setIsFetching(true);
-      try {
-        if (source === "jikan") {
-          const result = await getAnimeDetails(sourceId);
-          setFetchedItem(result);
-        }
-        // TMDB doesn't have a detail fetch yet, could add later
-      } catch (error) {
-        console.error("Failed to fetch item details:", error);
-      } finally {
-        setIsFetching(false);
+  const { data: fetchedItem = null, isLoading: isFetching } = useQuery({
+    queryKey: ["detail", source, sourceId],
+    queryFn: async () => {
+      if (source === "jikan") {
+        return await getAnimeDetails(sourceId);
       }
-    };
-
-    fetchItem();
-  }, [watchlistMatch, sourceId, source]);
+      return null;
+    },
+    enabled: !watchlistMatch && !!sourceId && !!source,
+  });
 
   const item = watchlistMatch ?? fetchedItem;
   const isInWatchlist = !!watchlistMatch;
@@ -108,7 +95,7 @@ export default function DetailScreen() {
     if (watchlistMatch?.note !== undefined) {
       setNoteText(watchlistMatch.note || "");
     }
-  }, [watchlistMatch?.note]);
+  }, [watchlistMatch]);
 
   const handleStatusChange = useCallback(
     async (status: WatchStatus) => {

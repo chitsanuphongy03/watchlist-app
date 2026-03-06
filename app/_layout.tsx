@@ -1,18 +1,18 @@
 import {
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
 import {
-    NotoSansThai_400Regular,
-    NotoSansThai_500Medium,
-    NotoSansThai_600SemiBold,
-    NotoSansThai_700Bold,
+  NotoSansThai_400Regular,
+  NotoSansThai_500Medium,
+  NotoSansThai_600SemiBold,
+  NotoSansThai_700Bold,
 } from "@expo-google-fonts/noto-sans-thai";
 import { useFonts } from "expo-font";
-import { Stack, router, useSegments } from "expo-router";
+import { router, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useRef } from "react";
@@ -25,9 +25,15 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { PopupProvider } from "@/components/ui/popup-provider";
 import { validateApiKeys } from "@/constants/api";
 import { Colors, FontFamily, FontSize } from "@/constants/theme";
+import {
+  asyncStoragePersister,
+  CACHE_MAX_AGE,
+  queryClient,
+} from "@/services/cache";
 import { saveLastOpened } from "@/services/storage";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -123,53 +129,64 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={styles.container}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: Colors.dark.background },
-            animation: "fade",
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister: asyncStoragePersister,
+            maxAge: CACHE_MAX_AGE,
           }}
         >
-          <Stack.Screen name="lock" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="setup-pin" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-          <Stack.Screen
-            name="detail"
-            options={{
-              presentation: "modal",
-              headerShown: true,
-              headerTitle: "รายละเอียด",
-              headerStyle: { backgroundColor: Colors.dark.background },
-              headerTitleStyle: {
-                fontFamily: FontFamily.thaiSemiBold,
-                fontSize: FontSize.lg,
-                color: Colors.dark.text,
-              },
-              headerTintColor: Colors.dark.text,
-              headerShadowVisible: false,
-              animation: "slide_from_bottom",
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Colors.dark.background },
+              animation: "fade",
             }}
-          />
-          <Stack.Screen
-            name="add-custom"
-            options={{
-              presentation: "modal",
-              headerShown: true,
-              headerTitle: "เพิ่มรายการ",
-              headerStyle: { backgroundColor: Colors.dark.background },
-              headerTitleStyle: {
-                fontFamily: FontFamily.thaiSemiBold,
-                fontSize: FontSize.lg,
-                color: Colors.dark.text,
-              },
-              headerTintColor: Colors.dark.text,
-              headerShadowVisible: false,
-              animation: "slide_from_bottom",
-            }}
-          />
-        </Stack>
-        <StatusBar style="light" />
-        <PopupProvider />
+          >
+            <Stack.Screen name="lock" options={{ gestureEnabled: false }} />
+            <Stack.Screen
+              name="setup-pin"
+              options={{ gestureEnabled: false }}
+            />
+            <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+            <Stack.Screen
+              name="detail"
+              options={{
+                presentation: "modal",
+                headerShown: true,
+                headerTitle: "รายละเอียด",
+                headerStyle: { backgroundColor: Colors.dark.background },
+                headerTitleStyle: {
+                  fontFamily: FontFamily.thaiSemiBold,
+                  fontSize: FontSize.lg,
+                  color: Colors.dark.text,
+                },
+                headerTintColor: Colors.dark.text,
+                headerShadowVisible: false,
+                animation: "slide_from_bottom",
+              }}
+            />
+            <Stack.Screen
+              name="add-custom"
+              options={{
+                presentation: "modal",
+                headerShown: true,
+                headerTitle: "เพิ่มรายการ",
+                headerStyle: { backgroundColor: Colors.dark.background },
+                headerTitleStyle: {
+                  fontFamily: FontFamily.thaiSemiBold,
+                  fontSize: FontSize.lg,
+                  color: Colors.dark.text,
+                },
+                headerTintColor: Colors.dark.text,
+                headerShadowVisible: false,
+                animation: "slide_from_bottom",
+              }}
+            />
+          </Stack>
+          <StatusBar style="light" />
+          <PopupProvider />
+        </PersistQueryClientProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
   );

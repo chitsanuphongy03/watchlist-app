@@ -15,6 +15,10 @@ A premium, design-focused mobile application for tracking your favorite entertai
   - Reminders to watch content.
   - "Inactivity" alerts if you haven't watched anything in a while.
   - Auto-suggestion for the next item when you finish one.
+- **💾 Local Caching**:
+  - Offline-first experience using React Query and AsyncStorage.
+  - Automatically caches Search and Discovery results for 30 days.
+  - View cache size and clear data manually via the Settings screen.
 - **🎨 Premium Design**:
   - Dark Red-Magenta aesthetic with gradients and blur effects.
   - Smooth animations using `react-native-reanimated`.
@@ -26,6 +30,7 @@ A premium, design-focused mobile application for tracking your favorite entertai
 - **Language**: TypeScript
 - **Navigation**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Data Fetching & Caching**: [TanStack Query](https://tanstack.com/query)
 - **Storage**:
   - `AsyncStorage` (Data persistence)
   - `Expo SecureStore` (Sensitive keys/PINs)

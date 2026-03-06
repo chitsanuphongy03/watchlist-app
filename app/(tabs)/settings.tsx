@@ -1,25 +1,26 @@
 import { Ionicons, type IoniconsName } from "@/components/icons";
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Radius,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
 } from "@/constants/theme";
+import { clearAppCache, getCacheSizeInMB } from "@/services/cache";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -80,6 +81,8 @@ function SettingsRow({
 }
 
 export default function SettingsScreen() {
+  const [cacheSizeMB, setCacheSizeMB] = useState("0.00");
+
   const isBiometricEnabled = useAuthStore(
     useCallback((s) => s.isBiometricEnabled, []),
   );
@@ -179,7 +182,28 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     initSettings();
+    getCacheSizeInMB().then(setCacheSizeMB);
   }, [initSettings]);
+
+  const handleClearCache = useCallback(() => {
+    Alert.alert(
+      "ล้างแคช",
+      "ต้องการล้างข้อมูลแคชที่บันทึกไว้ใช่หรือไม่? (การดึงข้อมูลครั้งต่อไปอาจใช้เวลานานขึ้นเล็กน้อย)",
+      [
+        { text: "ยกเลิก", style: "cancel" },
+        {
+          text: "ล้างเลย",
+          style: "destructive",
+          onPress: async () => {
+            await clearAppCache();
+            const newSize = await getCacheSizeInMB();
+            setCacheSizeMB(newSize);
+            Alert.alert("สำเร็จ", "ล้างแคชเรียบร้อยแล้ว", [{ text: "ตกลง" }]);
+          },
+        },
+      ],
+    );
+  }, []);
 
   const handleChangePin = useCallback(() => {
     router.push("/change-pin");
@@ -350,6 +374,27 @@ export default function SettingsScreen() {
               />
             </>
           )}
+        </SettingsSection>
+
+        <SettingsSection title="ข้อมูลแอปพลิเคชัน (Storage)">
+          <SettingsRow
+            icon="server-outline"
+            label="ขนาดของแคช (Cache)"
+            right={<Text style={styles.rowValue}>{cacheSizeMB} MB</Text>}
+            subtitle="ข้อมูลที่โหลดมาแล้วเพื่อความรวดเร็ว"
+          />
+          <SettingsRow
+            icon="trash-outline"
+            label="ล้างแคชทั้งหมด"
+            right={
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={Colors.dark.textMuted}
+              />
+            }
+            onPress={handleClearCache}
+          />
         </SettingsSection>
 
         <SettingsSection title="เกี่ยวกับ">

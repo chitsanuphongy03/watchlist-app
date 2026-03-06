@@ -8,6 +8,7 @@ import {
     SearchResultCardSkeleton,
 } from "@/components/skeleton";
 import { TypeFilter } from "@/components/type-filter";
+import { useQuery } from "@tanstack/react-query";
 
 import {
     Accent,
@@ -16,13 +17,22 @@ import {
     FontSize,
     Spacing,
 } from "@/constants/theme";
+import { getSeasonNowAnime, searchAnime } from "@/services/jikan";
+import {
+    getNowPlayingMovies,
+    getOnTheAirSeries,
+    searchMovies,
+    searchSeries,
+    searchTokusatsu,
+    searchAll as tmdbSearchAll,
+} from "@/services/tmdb";
 import { useSearchStore } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { ContentFilter, SearchResult } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
     FlatList,
     RefreshControl,
@@ -80,7 +90,6 @@ const SearchHeader = React.memo(
 );
 SearchHeader.displayName = "SearchHeader";
 
-// Loading skeletons for different states
 function SearchLoading() {
   return (
     <View style={styles.loadingContainer}>
@@ -104,25 +113,21 @@ function DiscoveryLoading() {
 export default function SearchScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
+  // Zustand UI State (Sync)
   const query = useSearchStore(useCallback((s) => s.query, []));
-  const results = useSearchStore(useCallback((s) => s.results, []));
-  const isLoading = useSearchStore(useCallback((s) => s.isLoading, []));
   const activeFilter = useSearchStore(useCallback((s) => s.activeFilter, []));
-  const hasSearched = useSearchStore(useCallback((s) => s.hasSearched, []));
-  const discovery = useSearchStore(useCallback((s) => s.discovery, []));
-  const isDiscoveryLoading = useSearchStore(
-    useCallback((s) => s.isDiscoveryLoading, []),
+  const debouncedQuery = useSearchStore(
+    useCallback((s) => s.debouncedQuery, []),
   );
+  const setQuery = useSearchStore(useCallback((s) => s.setQuery, []));
   const setActiveFilter = useSearchStore(
     useCallback((s) => s.setActiveFilter, []),
   );
   const debouncedSearch = useSearchStore(
     useCallback((s) => s.debouncedSearch, []),
   );
-  const clearResults = useSearchStore(useCallback((s) => s.clearResults, []));
-  const fetchDiscovery = useSearchStore(
-    useCallback((s) => s.fetchDiscovery, []),
-  );
+  const clearQuery = useSearchStore(useCallback((s) => s.clearQuery, []));
+  const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
   const items = useWatchlistStore(useCallback((state) => state.items, []));
   const addItem = useWatchlistStore(useCallback((state) => state.addItem, []));
@@ -132,30 +137,116 @@ export default function SearchScreen() {
     [items],
   );
 
-  useEffect(() => {
-    fetchDiscovery();
-  }, [fetchDiscovery]);
+  const hasSearched = debouncedQuery.trim().length >= 2;
+
+  // --- React Query for Discovery ---
+  const {
+    data: moviesData = [],
+    isLoading: isMoviesLoading,
+    refetch: refetchMovies,
+  } = useQuery({
+    queryKey: ["discovery", "movies"],
+    queryFn: getNowPlayingMovies,
+  });
+
+  const {
+    data: seriesData = [],
+    isLoading: isSeriesLoading,
+    refetch: refetchSeries,
+  } = useQuery({
+    queryKey: ["discovery", "series"],
+    queryFn: getOnTheAirSeries,
+  });
+
+  const {
+    data: animeData = [],
+    isLoading: isAnimeLoading,
+    refetch: refetchAnime,
+  } = useQuery({
+    queryKey: ["discovery", "anime"],
+    queryFn: getSeasonNowAnime,
+  });
+
+  const {
+    data: tokusatsuData = [],
+    isLoading: isTokusatsuLoading,
+    refetch: refetchTokusatsu,
+  } = useQuery({
+    queryKey: ["discovery", "tokusatsu"],
+    queryFn: searchTokusatsu,
+  });
+
+  const isDiscoveryLoading =
+    isMoviesLoading || isSeriesLoading || isAnimeLoading || isTokusatsuLoading;
+
+  // --- React Query for Search ---
+  const fetchSearchResults = async (q: string, filter: ContentFilter) => {
+    let freshResults: SearchResult[] = [];
+    switch (filter) {
+      case "movie":
+        freshResults = await searchMovies(q);
+        break;
+      case "anime":
+        freshResults = await searchAnime(q);
+        break;
+      case "series":
+        freshResults = await searchSeries(q, "series");
+        break;
+      case "tokusatsu":
+        freshResults = await searchSeries(q, "tokusatsu");
+        break;
+      case "all":
+      default: {
+        const [tmdbResults, animeResults] = await Promise.all([
+          tmdbSearchAll(q),
+          searchAnime(q),
+        ]);
+        freshResults = [...tmdbResults, ...animeResults];
+        break;
+      }
+    }
+
+    const seen = new Set<string>();
+    return freshResults.filter((item) => {
+      const key = `${item.title.toLowerCase()}_${item.year}_${item.type}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const { data: searchResults = [], isFetching: isSearchLoading } = useQuery({
+    queryKey: ["search", debouncedQuery, activeFilter],
+    queryFn: () => fetchSearchResults(debouncedQuery, activeFilter),
+    enabled: debouncedQuery.trim().length >= 2,
+  });
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchDiscovery(true);
+    await Promise.all([
+      refetchMovies(),
+      refetchSeries(),
+      refetchAnime(),
+      refetchTokusatsu(),
+    ]);
     setRefreshing(false);
-  }, [fetchDiscovery]);
+  }, [refetchMovies, refetchSeries, refetchAnime, refetchTokusatsu]);
 
   const handleQueryChange = useCallback(
     (text: string) => {
+      setQuery(text);
       if (text.trim().length === 0) {
-        clearResults();
+        clearQuery();
       } else {
         debouncedSearch(text);
       }
     },
-    [debouncedSearch, clearResults],
+    [setQuery, debouncedSearch, clearQuery],
   );
 
   const handleClear = useCallback(() => {
-    clearResults();
-  }, [clearResults]);
+    clearQuery();
+  }, [clearQuery]);
 
   const handleFilterChange = useCallback(
     (filter: ContentFilter) => {
@@ -163,8 +254,6 @@ export default function SearchScreen() {
     },
     [setActiveFilter],
   );
-
-  const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
   const handleAddToWatchlist = useCallback(
     async (item: SearchResult) => {
@@ -197,32 +286,24 @@ export default function SearchScreen() {
   const handleDetailPress = useCallback((item: SearchResult) => {
     router.push({
       pathname: "/detail",
-      params: {
-        sourceId: item.sourceId,
-        source: item.source,
-        type: item.type,
-      },
+      params: { sourceId: item.sourceId, source: item.source, type: item.type },
     });
   }, []);
 
   const renderContent = useCallback(() => {
-    if (isLoading) {
+    if (isSearchLoading && hasSearched) {
       return <SearchLoading />;
     }
 
     if (!hasSearched) {
-      if (isDiscoveryLoading) {
-        return <DiscoveryLoading />;
-      }
+      if (isDiscoveryLoading) return <DiscoveryLoading />;
 
-      // Filter discovery sections based on activeFilter
       const showMovies = activeFilter === "all" || activeFilter === "movie";
       const showAnime = activeFilter === "all" || activeFilter === "anime";
       const showSeries = activeFilter === "all" || activeFilter === "series";
       const showTokusatsu =
         activeFilter === "all" || activeFilter === "tokusatsu";
 
-      // Check if any section will be shown
       const hasVisibleSections =
         showMovies || showAnime || showSeries || showTokusatsu;
 
@@ -231,28 +312,28 @@ export default function SearchScreen() {
           {showMovies && (
             <DiscoverySection
               title="หนังน่าดู (Now Playing)"
-              data={discovery.movies}
+              data={moviesData}
               onDetailPress={handleDetailPress}
             />
           )}
           {showAnime && (
             <DiscoverySection
               title="อนิเมะซีซั่นนี้ (Season Now)"
-              data={discovery.anime}
+              data={animeData}
               onDetailPress={handleDetailPress}
             />
           )}
           {showSeries && (
             <DiscoverySection
               title="ซีรีส์มาใหม่ (On The Air)"
-              data={discovery.series}
+              data={seriesData}
               onDetailPress={handleDetailPress}
             />
           )}
           {showTokusatsu && (
             <DiscoverySection
               title="โทคุซัทสึ"
-              data={discovery.tokusatsu}
+              data={tokusatsuData}
               onDetailPress={handleDetailPress}
             />
           )}
@@ -275,7 +356,7 @@ export default function SearchScreen() {
       );
     }
 
-    if (results.length === 0) {
+    if (searchResults.length === 0) {
       return (
         <EmptyState
           icon="search-outline"
@@ -293,14 +374,14 @@ export default function SearchScreen() {
 
     return null;
   }, [
-    isLoading,
+    isSearchLoading,
     hasSearched,
-    results.length,
+    searchResults.length,
     isDiscoveryLoading,
-    discovery.movies,
-    discovery.anime,
-    discovery.series,
-    discovery.tokusatsu,
+    moviesData,
+    animeData,
+    seriesData,
+    tokusatsuData,
     handleDetailPress,
     handleAddCustom,
     query,
@@ -308,7 +389,7 @@ export default function SearchScreen() {
   ]);
 
   const renderFooter = useCallback(() => {
-    if (hasSearched && results.length > 0) {
+    if (hasSearched && searchResults.length > 0 && !isSearchLoading) {
       return (
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>ไม่เจอเรื่องที่ต้องการ?</Text>
@@ -321,7 +402,10 @@ export default function SearchScreen() {
       );
     }
     return null;
-  }, [hasSearched, results.length, handleAddCustom]);
+  }, [hasSearched, searchResults.length, handleAddCustom, isSearchLoading]);
+
+  // Use flatlist items only if searched and NOT loading
+  const listData = hasSearched && !isSearchLoading ? searchResults : [];
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -329,7 +413,7 @@ export default function SearchScreen() {
         <Text style={styles.title}>ค้นหา</Text>
       </View>
       <FlatList
-        data={results}
+        data={listData}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         extraData={[items, activeFilter]}
@@ -338,7 +422,7 @@ export default function SearchScreen() {
             query={query}
             activeFilter={activeFilter}
             hasSearched={hasSearched}
-            resultsLength={results.length}
+            resultsLength={listData.length}
             onQueryChange={handleQueryChange}
             onClear={handleClear}
             onFilterChange={handleFilterChange}
@@ -349,7 +433,7 @@ export default function SearchScreen() {
         contentContainerStyle={[
           styles.listContent,
           !hasSearched && styles.listContentDiscovery,
-          hasSearched && results.length === 0 && styles.listContentEmpty,
+          hasSearched && listData.length === 0 && styles.listContentEmpty,
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -376,54 +460,33 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
+  container: { flex: 1, backgroundColor: Colors.dark.background },
   titleContainer: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
   },
-
   title: {
     fontSize: FontSize.title,
     fontFamily: FontFamily.heavy,
     color: Colors.dark.text,
   },
-  headerContainer: {
-    paddingBottom: Spacing.sm,
-  },
+  headerContainer: { paddingBottom: Spacing.sm },
   searchBarContainer: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
   },
-  resultsHeader: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xs,
-  },
+  resultsHeader: { paddingHorizontal: Spacing.md, paddingTop: Spacing.xs },
   resultsCount: {
     fontSize: FontSize.sm,
     fontFamily: FontFamily.regular,
     color: Colors.dark.textMuted,
   },
-  loadingContainer: {
-    paddingTop: Spacing.md,
-    gap: Spacing.sm,
-  },
-  listContent: {
-    paddingBottom: 100,
-  },
-  listContentDiscovery: {
-    paddingBottom: 100,
-  },
-  listContentEmpty: {
-    flexGrow: 1,
-  },
-  discoveryContainer: {
-    marginTop: Spacing.sm,
-    paddingBottom: Spacing.xl,
-  },
+  loadingContainer: { paddingTop: Spacing.md, gap: Spacing.sm },
+  listContent: { paddingBottom: 100 },
+  listContentDiscovery: { paddingBottom: 100 },
+  listContentEmpty: { flexGrow: 1 },
+  discoveryContainer: { marginTop: Spacing.sm, paddingBottom: Spacing.xl },
   footerContainer: {
     alignItems: "center",
     padding: Spacing.lg,
