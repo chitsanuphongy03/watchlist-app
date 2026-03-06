@@ -1,23 +1,23 @@
 import {
-  Accent,
-  Colors,
-  FontFamily,
-  FontSize,
-  Radius,
-  Spacing,
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Radius,
+    Spacing,
 } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FlatList,
-  Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Modal,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const ITEM_HEIGHT = 44;
@@ -99,7 +99,7 @@ function ScrollPicker({ data, selectedIndex, onSelect }: ScrollPickerProps) {
 
   return (
     <View style={styles.pickerContainer}>
-      <View style={styles.selectionHighlight} />
+      <View style={styles.selectionHighlight} pointerEvents="none" />
       <FlatList
         ref={flatListRef}
         data={data}
@@ -277,7 +277,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: Accent.primary + "60",
     zIndex: 1,
-    pointerEvents: "none",
   },
   pickerItem: {
     height: ITEM_HEIGHT,
