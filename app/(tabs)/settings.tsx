@@ -26,6 +26,59 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NumberPickerModal } from "@/components/number-picker-modal";
 import { TimePickerModal } from "@/components/time-picker-modal";
 
+// These MUST be defined outside the component to avoid re-creation on every render
+function SettingsSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionContent}>{children}</View>
+    </View>
+  );
+}
+
+function SettingsRow({
+  icon,
+  label,
+  right,
+  onPress,
+  subtitle,
+}: {
+  icon: IoniconsName;
+  label: string;
+  right: React.ReactNode;
+  onPress?: () => void;
+  subtitle?: string;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+    >
+      <View style={styles.rowLeft}>
+        <Ionicons
+          name={icon}
+          size={20}
+          color={Accent.primary}
+          style={styles.rowIcon}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.rowLabel}>{label}</Text>
+          {subtitle && <Text style={styles.rowSubtitle}>{subtitle}</Text>}
+        </View>
+      </View>
+      {right}
+    </TouchableOpacity>
+  );
+}
+
 export default function SettingsScreen() {
   const isBiometricEnabled = useAuthStore(
     useCallback((s) => s.isBiometricEnabled, []),
@@ -159,54 +212,6 @@ export default function SettingsScreen() {
       }
     },
     [toggleReminder, getNextItem, updateReminderSchedule],
-  );
-
-  const SettingsSection = ({
-    title,
-    children,
-  }: {
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionContent}>{children}</View>
-    </View>
-  );
-
-  const SettingsRow = ({
-    icon,
-    label,
-    right,
-    onPress,
-    subtitle,
-  }: {
-    icon: IoniconsName;
-    label: string;
-    right: React.ReactNode;
-    onPress?: () => void;
-    subtitle?: string;
-  }) => (
-    <TouchableOpacity
-      style={styles.row}
-      onPress={onPress}
-      disabled={!onPress}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
-      <View style={styles.rowLeft}>
-        <Ionicons
-          name={icon}
-          size={20}
-          color={Accent.primary}
-          style={styles.rowIcon}
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.rowLabel}>{label}</Text>
-          {subtitle && <Text style={styles.rowSubtitle}>{subtitle}</Text>}
-        </View>
-      </View>
-      {right}
-    </TouchableOpacity>
   );
 
   return (

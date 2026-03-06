@@ -1,8 +1,7 @@
 import {
   ENDPOINTS,
   JIKAN_BASE_URL,
-  RATE_LIMITS,
-  API_ERRORS,
+  RATE_LIMITS
 } from "@/constants/api";
 import { PAGINATION, TIMEOUTS } from "@/constants/config";
 import type {
@@ -26,7 +25,7 @@ interface FetchOptions {
 
 async function fetchJikan<T>(
   endpoint: string,
-  options: FetchOptions = {}
+  options: FetchOptions = {},
 ): Promise<T> {
   const { retries = PAGINATION.MAX_RETRIES, timeout = TIMEOUTS.API } = options;
 
@@ -67,7 +66,7 @@ async function fetchJikan<T>(
         }
         return false;
       },
-    }
+    },
   );
 }
 
@@ -118,9 +117,6 @@ export async function searchAnime(query: string): Promise<SearchResult[]> {
     const endpoint = `${ENDPOINTS.jikan.searchAnime}?q=${encoded}&limit=${PAGINATION.SEARCH_RESULTS}&sfw=true`;
 
     const data = await fetchJikan<JikanSearchResponse>(endpoint);
-    console.log(
-      `[Jikan] searchAnime: found ${data.data?.length || 0} results for "${query}"`
-    );
 
     return (
       data.data
@@ -134,7 +130,7 @@ export async function searchAnime(query: string): Promise<SearchResult[]> {
 }
 
 export async function getAnimeDetails(
-  malId: string
+  malId: string,
 ): Promise<SearchResult | null> {
   try {
     if (!malId) return null;
@@ -151,10 +147,8 @@ export async function getAnimeDetails(
 export async function getSeasonNowAnime(): Promise<SearchResult[]> {
   try {
     const endpoint = `${ENDPOINTS.jikan.seasonNow}?limit=${PAGINATION.DISCOVERY_ITEMS}&sfw=true`;
-    console.log("[Jikan] Fetching season now anime...");
 
     const data = await fetchJikan<JikanSearchResponse>(endpoint);
-    console.log(`[Jikan] Season now: found ${data.data?.length || 0} anime`);
 
     return (
       data.data

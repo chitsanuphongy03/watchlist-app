@@ -4,17 +4,17 @@ import { GradientButton } from "@/components/gradient-button";
 import { SearchBar } from "@/components/search-bar";
 import { SearchResultCard } from "@/components/search-result-card";
 import {
-  DiscoverySectionSkeleton,
-  SearchResultCardSkeleton,
+    DiscoverySectionSkeleton,
+    SearchResultCardSkeleton,
 } from "@/components/skeleton";
 import { TypeFilter } from "@/components/type-filter";
 
 import {
-  Accent,
-  Colors,
-  FontFamily,
-  FontSize,
-  Spacing,
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Spacing,
 } from "@/constants/theme";
 import { useSearchStore } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -24,12 +24,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -126,12 +126,10 @@ export default function SearchScreen() {
 
   const items = useWatchlistStore(useCallback((state) => state.items, []));
   const addItem = useWatchlistStore(useCallback((state) => state.addItem, []));
-  const isInWatchlist = useWatchlistStore(
-    useCallback(
-      (state) => (sourceId: string, source: string) =>
-        state.items.some((i) => i.sourceId === sourceId && i.source === source),
-      [],
-    ),
+  const isInWatchlist = useCallback(
+    (sourceId: string, source: string) =>
+      items.some((i) => i.sourceId === sourceId && i.source === source),
+    [items],
   );
 
   useEffect(() => {
@@ -140,7 +138,7 @@ export default function SearchScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchDiscovery();
+    await fetchDiscovery(true);
     setRefreshing(false);
   }, [fetchDiscovery]);
 
@@ -199,7 +197,11 @@ export default function SearchScreen() {
   const handleDetailPress = useCallback((item: SearchResult) => {
     router.push({
       pathname: "/detail",
-      params: { item: JSON.stringify(item) },
+      params: {
+        sourceId: item.sourceId,
+        source: item.source,
+        type: item.type,
+      },
     });
   }, []);
 

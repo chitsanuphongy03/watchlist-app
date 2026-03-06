@@ -1,11 +1,11 @@
 import { scheduleNextItemNotification } from "@/services/notifications";
 import { getWatchlist, saveWatchlist } from "@/services/storage";
 import type {
-  ContentFilter,
-  SearchResult,
-  StatusFilter,
-  WatchlistItem,
-  WatchStatus,
+    ContentFilter,
+    SearchResult,
+    StatusFilter,
+    WatchlistItem,
+    WatchStatus,
 } from "@/types";
 import { create } from "zustand";
 
@@ -57,7 +57,12 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
       const normalizedItems = [...normalizedActive, ...watchedItems];
 
-      if (JSON.stringify(items) !== JSON.stringify(normalizedItems)) {
+      const needsSave = normalizedActive.some((item, index) => {
+        const original = activeItems[index];
+        return original && original.rank !== item.rank;
+      });
+
+      if (needsSave) {
         await saveWatchlist(normalizedItems);
       }
 

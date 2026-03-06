@@ -29,7 +29,7 @@ A premium, design-focused mobile application for tracking your favorite entertai
 - **Storage**:
   - `AsyncStorage` (Data persistence)
   - `Expo SecureStore` (Sensitive keys/PINs)
-- **Animations**: `react-native-reanimated`, `moti`
+- **Animations**: `react-native-reanimated`
 - **APIs**:
   - [The Movie Database (TMDB)](https://www.themoviedb.org/)
   - [Jikan (MyAnimeList)](https://jikan.moe/)

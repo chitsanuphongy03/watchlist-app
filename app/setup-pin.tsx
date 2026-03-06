@@ -1,14 +1,13 @@
 import { PinPad } from "@/components/pin-pad";
 import {
-    Accent,
-    Colors,
-    FontFamily,
-    FontSize,
-    Spacing,
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Spacing,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -36,10 +35,7 @@ export default function SetupPinScreen() {
           setStep("confirm");
         } else {
           if (newPin === firstPin) {
-            const success = await setupPin(newPin);
-            if (success) {
-              router.replace("/(tabs)");
-            }
+            await setupPin(newPin);
           } else {
             setError(true);
             setTimeout(() => {

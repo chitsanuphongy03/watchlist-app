@@ -1,28 +1,37 @@
 import { StatusToggle } from "@/components/status-toggle";
 import {
-    Accent,
-    Colors,
-    ContentTypeLabel,
-    FontFamily,
-    FontSize,
-    Radius,
-    Shadow,
-    Spacing,
+  Accent,
+  Colors,
+  ContentTypeLabel,
+  FontFamily,
+  FontSize,
+  Radius,
+  Shadow,
+  Spacing,
 } from "@/constants/theme";
+import { getAnimeDetails } from "@/services/jikan";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { SearchResult, WatchlistItem, WatchStatus } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { useUIStore } from "@/stores/ui-store";
@@ -32,50 +41,74 @@ const POSTER_WIDTH = width * 0.4;
 const POSTER_HEIGHT = POSTER_WIDTH * 1.5;
 
 export default function DetailScreen() {
-  const { id, item: itemParam } = useLocalSearchParams<{
+  const { id, sourceId, source } = useLocalSearchParams<{
     id: string;
-    item: string;
+    sourceId: string;
+    source: string;
   }>();
   const items = useWatchlistStore(useCallback((s) => s.items, []));
   const updateStatus = useWatchlistStore(
     useCallback((s) => s.updateStatus, []),
   );
+  const updateNote = useWatchlistStore(useCallback((s) => s.updateNote, []));
   const removeItem = useWatchlistStore(useCallback((s) => s.removeItem, []));
   const addItem = useWatchlistStore(useCallback((s) => s.addItem, []));
   const showAlert = useUIStore(useCallback((s) => s.showAlert, []));
   const showToast = useUIStore(useCallback((s) => s.showToast, []));
 
-  const watchlistMatch = useMemo(() => {
-    const exactMatch = items.find((i) => i.id === id);
-    if (exactMatch) return exactMatch;
+  // State for API-fetched items (when viewing from search/discovery)
+  const [fetchedItem, setFetchedItem] = useState<SearchResult | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
 
-    if (itemParam) {
-      try {
-        const parsed: SearchResult = JSON.parse(itemParam);
-        return items.find(
-          (i) => i.sourceId === parsed.sourceId && i.source === parsed.source,
-        );
-      } catch {
-        return undefined;
-      }
+  // Note editing state
+  const [noteText, setNoteText] = useState("");
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Find item in watchlist by id or sourceId+source
+  const watchlistMatch = useMemo(() => {
+    if (id) {
+      const exactMatch = items.find((i) => i.id === id);
+      if (exactMatch) return exactMatch;
+    }
+
+    if (sourceId && source) {
+      return items.find((i) => i.sourceId === sourceId && i.source === source);
     }
     return undefined;
-  }, [items, id, itemParam]);
+  }, [items, id, sourceId, source]);
 
-  const item = useMemo(() => {
-    if (watchlistMatch) return watchlistMatch;
-    if (itemParam) {
+  // Fetch from API if not in watchlist and we have sourceId+source
+  useEffect(() => {
+    if (watchlistMatch || !sourceId || !source) return;
+
+    const fetchItem = async () => {
+      setIsFetching(true);
       try {
-        return JSON.parse(itemParam) as SearchResult;
-      } catch (e) {
-        console.error("Failed to parse item param", e);
-        return null;
+        if (source === "jikan") {
+          const result = await getAnimeDetails(sourceId);
+          setFetchedItem(result);
+        }
+        // TMDB doesn't have a detail fetch yet, could add later
+      } catch (error) {
+        console.error("Failed to fetch item details:", error);
+      } finally {
+        setIsFetching(false);
       }
-    }
-    return null;
-  }, [watchlistMatch, itemParam]);
+    };
 
+    fetchItem();
+  }, [watchlistMatch, sourceId, source]);
+
+  const item = watchlistMatch ?? fetchedItem;
   const isInWatchlist = !!watchlistMatch;
+
+  // Initialize note text when item loads
+  useEffect(() => {
+    if (watchlistMatch?.note !== undefined) {
+      setNoteText(watchlistMatch.note || "");
+    }
+  }, [watchlistMatch?.note]);
 
   const handleStatusChange = useCallback(
     async (status: WatchStatus) => {
@@ -114,7 +147,35 @@ export default function DetailScreen() {
     });
   }, [item, isInWatchlist, removeItem, showAlert, showToast]);
 
+  const handleNoteChange = useCallback(
+    (text: string) => {
+      setNoteText(text);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        if (item && isInWatchlist) {
+          updateNote(item.id, text);
+        }
+      }, 500);
+    },
+    [item, isInWatchlist, updateNote],
+  );
+
   if (!item) {
+    if (isFetching) {
+      return (
+        <View
+          style={[
+            styles.container,
+            { justifyContent: "center", alignItems: "center" },
+          ]}
+        >
+          <ActivityIndicator size="large" color={Accent.primary} />
+          <Text style={[styles.errorText, { marginTop: Spacing.md }]}>
+            กำลังโหลด...
+          </Text>
+        </View>
+      );
+    }
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>ไม่พบรายการ</Text>
@@ -207,9 +268,37 @@ export default function DetailScreen() {
         {isInWatchlist && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>หมายเหตุ</Text>
-            <Text style={styles.note}>
-              {(item as WatchlistItem).note || "ไม่มีหมายเหตุ"}
-            </Text>
+            {isEditingNote ? (
+              <View>
+                <TextInput
+                  style={styles.noteInput}
+                  value={noteText}
+                  onChangeText={handleNoteChange}
+                  placeholder="เพิ่มหมายเหตุ..."
+                  placeholderTextColor={Colors.dark.textMuted}
+                  multiline
+                  maxLength={500}
+                  autoFocus
+                  onBlur={() => setIsEditingNote(false)}
+                />
+                <Text style={styles.noteCharCount}>{noteText.length}/500</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setIsEditingNote(true)}
+                activeOpacity={0.7}
+                style={styles.noteContainer}
+              >
+                <Text style={styles.note}>
+                  {noteText || "แตะเพื่อเพิ่มหมายเหตุ..."}
+                </Text>
+                <Ionicons
+                  name="pencil-outline"
+                  size={16}
+                  color={Colors.dark.textMuted}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         )}
         <View style={styles.section}>
@@ -351,6 +440,36 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontFamily: FontFamily.regular,
     color: Colors.dark.textSecondary,
+    flex: 1,
+  },
+  noteContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.dark.surface,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  noteInput: {
+    fontSize: FontSize.md,
+    fontFamily: FontFamily.regular,
+    color: Colors.dark.text,
+    backgroundColor: Colors.dark.surface,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Accent.primary,
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  noteCharCount: {
+    fontSize: FontSize.xs,
+    fontFamily: FontFamily.regular,
+    color: Colors.dark.textMuted,
+    textAlign: "right",
+    marginTop: 4,
   },
   infoRow: {
     flexDirection: "row",

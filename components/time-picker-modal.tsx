@@ -1,15 +1,124 @@
-import { Accent, Colors, FontFamily, FontSize, Radius, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
 import {
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FlatList,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
+const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
+
+function generateItems(count: number): string[] {
+  return Array.from({ length: count }, (_, i) => i.toString().padStart(2, "0"));
+}
+
+const HOURS = generateItems(24);
+const MINUTES = generateItems(60);
+
+interface ScrollPickerProps {
+  data: string[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+}
+
+function ScrollPicker({ data, selectedIndex, onSelect }: ScrollPickerProps) {
+  const flatListRef = useRef<FlatList>(null);
+  const isScrolling = useRef(false);
+
+  useEffect(() => {
+    if (flatListRef.current && !isScrolling.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({
+          offset: selectedIndex * ITEM_HEIGHT,
+          animated: false,
+        });
+      }, 50);
+    }
+  }, [selectedIndex]);
+
+  const handleScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      isScrolling.current = false;
+      const offset = e.nativeEvent.contentOffset.y;
+      const index = Math.round(offset / ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(index, data.length - 1));
+      onSelect(clamped);
+    },
+    [data.length, onSelect],
+  );
+
+  const handleScrollBegin = useCallback(() => {
+    isScrolling.current = true;
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: string; index: number }) => {
+      const isSelected = index === selectedIndex;
+      return (
+        <View
+          style={[styles.pickerItem, isSelected && styles.pickerItemSelected]}
+        >
+          <Text
+            style={[
+              styles.pickerItemText,
+              isSelected && styles.pickerItemTextSelected,
+            ]}
+          >
+            {item}
+          </Text>
+        </View>
+      );
+    },
+    [selectedIndex],
+  );
+
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+
+  return (
+    <View style={styles.pickerContainer}>
+      <View style={styles.selectionHighlight} />
+      <FlatList
+        ref={flatListRef}
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item) => item}
+        getItemLayout={getItemLayout}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_HEIGHT}
+        decelerationRate="fast"
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollBeginDrag={handleScrollBegin}
+        contentContainerStyle={{
+          paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
+        }}
+        style={{ height: PICKER_HEIGHT }}
+      />
+    </View>
+  );
+}
 
 interface TimePickerModalProps {
   visible: boolean;
@@ -24,30 +133,22 @@ export function TimePickerModal({
   onConfirm,
   onCancel,
 }: TimePickerModalProps) {
-  const [hours, setHours] = useState("");
-  const [minutes, setMinutes] = useState("");
+  const [hourIndex, setHourIndex] = useState(0);
+  const [minuteIndex, setMinuteIndex] = useState(0);
 
   useEffect(() => {
     if (visible && initialTime) {
       const [h, m] = initialTime.split(":");
-      setHours(h || "");
-      setMinutes(m || "");
+      setHourIndex(parseInt(h, 10) || 0);
+      setMinuteIndex(parseInt(m, 10) || 0);
     }
   }, [visible, initialTime]);
 
   const handleConfirm = () => {
-    const h = hours.padStart(2, "0");
-    const m = minutes.padStart(2, "0");
+    const h = HOURS[hourIndex];
+    const m = MINUTES[minuteIndex];
     onConfirm(`${h}:${m}`);
   };
-
-  const isValid =
-    hours.length > 0 &&
-    minutes.length > 0 &&
-    parseInt(hours, 10) >= 0 &&
-    parseInt(hours, 10) <= 23 &&
-    parseInt(minutes, 10) >= 0 &&
-    parseInt(minutes, 10) <= 59;
 
   return (
     <Modal
@@ -57,7 +158,10 @@ export function TimePickerModal({
       onRequestClose={onCancel}
     >
       <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.container}>
+        <Pressable
+          style={styles.container}
+          onPress={(e) => e.stopPropagation()}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>ตั้งเวลาเตือน</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -66,58 +170,34 @@ export function TimePickerModal({
           </View>
 
           <View style={styles.timeContainer}>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={hours}
-                onChangeText={(text) => {
-                  const filtered = text.replace(/[^0-9]/g, "").slice(0, 2);
-                  setHours(filtered);
-                }}
-                placeholder="00"
-                placeholderTextColor={Colors.dark.textMuted}
-                keyboardType="number-pad"
-                maxLength={2}
-                selectTextOnFocus
-              />
+            <View style={styles.columnWrapper}>
               <Text style={styles.label}>ชั่วโมง</Text>
+              <ScrollPicker
+                data={HOURS}
+                selectedIndex={hourIndex}
+                onSelect={setHourIndex}
+              />
             </View>
 
             <Text style={styles.separator}>:</Text>
 
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={minutes}
-                onChangeText={(text) => {
-                  const filtered = text.replace(/[^0-9]/g, "").slice(0, 2);
-                  setMinutes(filtered);
-                }}
-                placeholder="00"
-                placeholderTextColor={Colors.dark.textMuted}
-                keyboardType="number-pad"
-                maxLength={2}
-                selectTextOnFocus
-              />
+            <View style={styles.columnWrapper}>
               <Text style={styles.label}>นาที</Text>
+              <ScrollPicker
+                data={MINUTES}
+                selectedIndex={minuteIndex}
+                onSelect={setMinuteIndex}
+              />
             </View>
           </View>
 
           <TouchableOpacity
-            style={[styles.confirmButton, !isValid && styles.confirmButtonDisabled]}
+            style={styles.confirmButton}
             onPress={handleConfirm}
-            disabled={!isValid}
           >
-            <Text
-              style={[
-                styles.confirmButtonText,
-                !isValid && styles.confirmButtonTextDisabled,
-              ]}
-            >
-              ตกลง
-            </Text>
+            <Text style={styles.confirmButtonText}>ตกลง</Text>
           </TouchableOpacity>
-        </View>
+        </Pressable>
       </Pressable>
     </Modal>
   );
@@ -144,7 +224,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   title: {
     fontSize: FontSize.xl,
@@ -160,32 +240,60 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: Spacing.lg,
   },
-  inputWrapper: {
+  columnWrapper: {
     alignItems: "center",
-  },
-  input: {
-    width: 70,
-    height: 70,
-    backgroundColor: Colors.dark.background,
-    borderRadius: Radius.md,
-    textAlign: "center",
-    fontSize: 32,
-    fontFamily: FontFamily.bold,
-    color: Colors.dark.text,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
   },
   label: {
     fontSize: FontSize.xs,
     fontFamily: FontFamily.regular,
     color: Colors.dark.textMuted,
-    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   separator: {
     fontSize: 32,
     fontFamily: FontFamily.bold,
     color: Colors.dark.text,
     marginHorizontal: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  pickerContainer: {
+    height: PICKER_HEIGHT,
+    width: 80,
+    overflow: "hidden",
+    borderRadius: Radius.md,
+    backgroundColor: Colors.dark.background,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+    position: "relative",
+  },
+  selectionHighlight: {
+    position: "absolute",
+    top: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
+    left: 0,
+    right: 0,
+    height: ITEM_HEIGHT,
+    backgroundColor: Accent.primary + "20",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: Accent.primary + "60",
+    zIndex: 1,
+    pointerEvents: "none",
+  },
+  pickerItem: {
+    height: ITEM_HEIGHT,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pickerItemSelected: {},
+  pickerItemText: {
+    fontSize: 22,
+    fontFamily: FontFamily.medium,
+    color: Colors.dark.textMuted,
+  },
+  pickerItemTextSelected: {
+    fontSize: 26,
+    fontFamily: FontFamily.bold,
+    color: Colors.dark.text,
   },
   confirmButton: {
     backgroundColor: Accent.primary,
@@ -193,15 +301,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: "center",
   },
-  confirmButtonDisabled: {
-    backgroundColor: Colors.dark.border,
-  },
   confirmButtonText: {
     fontSize: FontSize.md,
     fontFamily: FontFamily.semibold,
     color: Colors.dark.text,
-  },
-  confirmButtonTextDisabled: {
-    color: Colors.dark.textMuted,
   },
 });

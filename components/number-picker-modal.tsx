@@ -1,15 +1,34 @@
-import { Accent, Colors, FontFamily, FontSize, Radius, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
 import {
+  Accent,
+  Colors,
+  FontFamily,
+  FontSize,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  FlatList,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
+const ITEM_HEIGHT = 50;
+const VISIBLE_ITEMS = 5;
+const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
 interface NumberPickerModalProps {
   visible: boolean;
@@ -32,23 +51,79 @@ export function NumberPickerModal({
   onConfirm,
   onCancel,
 }: NumberPickerModalProps) {
-  const [value, setValue] = useState(initialValue.toString());
+  const flatListRef = useRef<FlatList>(null);
+  const isScrolling = useRef(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const data = useMemo(() => {
+    const items: number[] = [];
+    for (let i = min; i <= max; i++) {
+      items.push(i);
+    }
+    return items;
+  }, [min, max]);
 
   useEffect(() => {
     if (visible) {
-      setValue(initialValue.toString());
+      const index = Math.max(0, initialValue - min);
+      setSelectedIndex(index);
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({
+          offset: index * ITEM_HEIGHT,
+          animated: false,
+        });
+      }, 100);
     }
-  }, [visible, initialValue]);
+  }, [visible, initialValue, min]);
+
+  const handleScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      isScrolling.current = false;
+      const offset = e.nativeEvent.contentOffset.y;
+      const index = Math.round(offset / ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(index, data.length - 1));
+      setSelectedIndex(clamped);
+    },
+    [data.length],
+  );
+
+  const handleScrollBegin = useCallback(() => {
+    isScrolling.current = true;
+  }, []);
 
   const handleConfirm = () => {
-    const num = parseInt(value, 10);
-    if (!isNaN(num) && num >= min && num <= max) {
-      onConfirm(num);
-    }
+    onConfirm(data[selectedIndex]);
   };
 
-  const numValue = parseInt(value, 10);
-  const isValid = !isNaN(numValue) && numValue >= min && numValue <= max;
+  const renderItem = useCallback(
+    ({ item, index }: { item: number; index: number }) => {
+      const isSelected = index === selectedIndex;
+      return (
+        <View
+          style={[styles.pickerItem, isSelected && styles.pickerItemSelected]}
+        >
+          <Text
+            style={[
+              styles.pickerItemText,
+              isSelected && styles.pickerItemTextSelected,
+            ]}
+          >
+            {item}
+          </Text>
+        </View>
+      );
+    },
+    [selectedIndex],
+  );
+
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
 
   return (
     <Modal
@@ -58,7 +133,10 @@ export function NumberPickerModal({
       onRequestClose={onCancel}
     >
       <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.container}>
+        <Pressable
+          style={styles.container}
+          onPress={(e) => e.stopPropagation()}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -68,38 +146,36 @@ export function NumberPickerModal({
 
           <Text style={styles.subtitle}>{subtitle}</Text>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={(text) => {
-                const filtered = text.replace(/[^0-9]/g, "");
-                setValue(filtered);
-              }}
-              placeholder={min.toString()}
-              placeholderTextColor={Colors.dark.textMuted}
-              keyboardType="number-pad"
-              maxLength={3}
-              selectTextOnFocus
-            />
+          <View style={styles.pickerWrapper}>
+            <View style={styles.pickerContainer}>
+              <View style={styles.selectionHighlight} />
+              <FlatList
+                ref={flatListRef}
+                data={data}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.toString()}
+                getItemLayout={getItemLayout}
+                showsVerticalScrollIndicator={false}
+                snapToInterval={ITEM_HEIGHT}
+                decelerationRate="fast"
+                onMomentumScrollEnd={handleScrollEnd}
+                onScrollBeginDrag={handleScrollBegin}
+                contentContainerStyle={{
+                  paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
+                }}
+                style={{ height: PICKER_HEIGHT }}
+              />
+            </View>
             <Text style={styles.unit}>วัน</Text>
           </View>
 
           <TouchableOpacity
-            style={[styles.confirmButton, !isValid && styles.confirmButtonDisabled]}
+            style={styles.confirmButton}
             onPress={handleConfirm}
-            disabled={!isValid}
           >
-            <Text
-              style={[
-                styles.confirmButtonText,
-                !isValid && styles.confirmButtonTextDisabled,
-              ]}
-            >
-              ตกลง
-            </Text>
+            <Text style={styles.confirmButtonText}>ตกลง</Text>
           </TouchableOpacity>
-        </View>
+        </Pressable>
       </Pressable>
     </Modal>
   );
@@ -129,9 +205,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   title: {
-    fontSize: FontSize.xl,
+    fontSize: FontSize.lg,
     fontFamily: FontFamily.semibold,
     color: Colors.dark.text,
+    flex: 1,
+    marginRight: Spacing.sm,
   },
   closeButton: {
     padding: Spacing.xs,
@@ -142,26 +220,53 @@ const styles = StyleSheet.create({
     color: Colors.dark.textMuted,
     marginBottom: Spacing.lg,
   },
-  inputContainer: {
+  pickerWrapper: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,
   },
-  input: {
+  pickerContainer: {
+    height: PICKER_HEIGHT,
     width: 100,
-    height: 70,
-    backgroundColor: Colors.dark.background,
+    overflow: "hidden",
     borderRadius: Radius.md,
-    textAlign: "center",
-    fontSize: 32,
-    fontFamily: FontFamily.bold,
-    color: Colors.dark.text,
+    backgroundColor: Colors.dark.background,
     borderWidth: 1,
     borderColor: Colors.dark.border,
+    position: "relative",
+  },
+  selectionHighlight: {
+    position: "absolute",
+    top: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
+    left: 0,
+    right: 0,
+    height: ITEM_HEIGHT,
+    backgroundColor: Accent.primary + "20",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: Accent.primary + "60",
+    zIndex: 1,
+    pointerEvents: "none",
+  },
+  pickerItem: {
+    height: ITEM_HEIGHT,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pickerItemSelected: {},
+  pickerItemText: {
+    fontSize: 22,
+    fontFamily: FontFamily.medium,
+    color: Colors.dark.textMuted,
+  },
+  pickerItemTextSelected: {
+    fontSize: 28,
+    fontFamily: FontFamily.bold,
+    color: Colors.dark.text,
   },
   unit: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.xl,
     fontFamily: FontFamily.medium,
     color: Colors.dark.text,
     marginLeft: Spacing.md,
@@ -172,15 +277,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: "center",
   },
-  confirmButtonDisabled: {
-    backgroundColor: Colors.dark.border,
-  },
   confirmButtonText: {
     fontSize: FontSize.md,
     fontFamily: FontFamily.semibold,
     color: Colors.dark.text,
-  },
-  confirmButtonTextDisabled: {
-    color: Colors.dark.textMuted,
   },
 });

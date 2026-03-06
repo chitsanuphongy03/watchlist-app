@@ -4,11 +4,12 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async () =>
+    ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }) as Notifications.NotificationBehavior,
 });
 
 export async function requestPermissions(): Promise<boolean> {

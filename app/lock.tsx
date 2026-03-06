@@ -8,7 +8,6 @@ import {
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -32,10 +31,8 @@ export default function LockScreen() {
   const showBiometricButton = isBiometricAvailable;
 
   const handleBiometric = useCallback(async () => {
-    const success = await authenticateWithBiometric();
-    if (success) {
-      router.replace("/(tabs)");
-    }
+    await authenticateWithBiometric();
+    // Navigation is handled by useProtectedRoute in _layout.tsx
   }, [authenticateWithBiometric]);
 
   useEffect(() => {
@@ -51,15 +48,14 @@ export default function LockScreen() {
 
       if (newPin.length === 6) {
         const valid = await verifyPin(newPin);
-        if (valid) {
-          router.replace("/(tabs)");
-        } else {
+        if (!valid) {
           setError(true);
           setTimeout(() => {
             setPin("");
             setError(false);
           }, 500);
         }
+        // If valid, navigation is handled by useProtectedRoute in _layout.tsx
       }
     },
     [verifyPin],

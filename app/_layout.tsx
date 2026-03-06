@@ -1,22 +1,22 @@
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  Inter_800ExtraBold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
 import {
-  NotoSansThai_400Regular,
-  NotoSansThai_500Medium,
-  NotoSansThai_600SemiBold,
-  NotoSansThai_700Bold,
+    NotoSansThai_400Regular,
+    NotoSansThai_500Medium,
+    NotoSansThai_600SemiBold,
+    NotoSansThai_700Bold,
 } from "@expo-google-fonts/noto-sans-thai";
 import { useFonts } from "expo-font";
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, Text } from "react-native";
+import React, { useCallback, useEffect, useRef } from "react";
+import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
@@ -31,15 +31,7 @@ import { useWatchlistStore } from "@/stores/watchlist-store";
 
 SplashScreen.preventAutoHideAsync();
 
-const oldRender = (Text as any).render;
-if (oldRender) {
-  (Text as any).render = function (...args: any[]) {
-    const origin = oldRender.apply(this, args);
-    return React.cloneElement(origin, {
-      style: [{ fontFamily: FontFamily.regular }, origin.props.style],
-    });
-  };
-}
+// Font defaults are set via component styles and useFonts hook
 
 export const unstable_settings = {
   initialRouteName: "lock",
@@ -51,7 +43,7 @@ function useProtectedRoute() {
   const isPinSet = useAuthStore((s) => s.isPinSet);
   const isLoading = useAuthStore((s) => s.isLoading);
   const hasNavigated = useRef(false);
-  
+
   // Convert segments to string to avoid infinite loop
   const segmentsKey = segments.join(",");
 
@@ -74,6 +66,7 @@ function useProtectedRoute() {
     } else {
       hasNavigated.current = false;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally using segmentsKey instead of segments to prevent infinite loops
   }, [isAuthenticated, isPinSet, isLoading, segmentsKey]);
 }
 
@@ -84,6 +77,7 @@ export default function RootLayout() {
   const initialized = useRef(false);
 
   const [isSplashFinished, setSplashFinished] = React.useState(false);
+  const handleSplashFinish = useCallback(() => setSplashFinished(true), []);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular: Inter_400Regular,
     Inter_500Medium: Inter_500Medium,
@@ -104,7 +98,7 @@ export default function RootLayout() {
       try {
         // Validate API keys on startup
         validateApiKeys();
-        
+
         await initAuth();
         await initWatchlist();
         await saveLastOpened();
@@ -115,17 +109,12 @@ export default function RootLayout() {
     init();
   }, [initAuth, initWatchlist]);
 
-  useEffect(() => {
-    if (fontsLoaded && !authLoading) {
-    }
-  }, [fontsLoaded, authLoading]);
-
   useProtectedRoute();
 
   if ((!fontsLoaded && !fontError) || !isSplashFinished) {
     return (
       <AnimatedSplash
-        onAnimationFinish={() => setSplashFinished(true)}
+        onAnimationFinish={handleSplashFinish}
         isAppReady={(fontsLoaded || !!fontError) && !authLoading}
       />
     );
@@ -135,50 +124,50 @@ export default function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={styles.container}>
         <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.dark.background },
-          animation: "fade",
-        }}
-      >
-        <Stack.Screen name="lock" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="setup-pin" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-        <Stack.Screen
-          name="detail"
-          options={{
-            presentation: "modal",
-            headerShown: true,
-            headerTitle: "รายละเอียด",
-            headerStyle: { backgroundColor: Colors.dark.background },
-            headerTitleStyle: {
-              fontFamily: FontFamily.thaiSemiBold,
-              fontSize: FontSize.lg,
-              color: Colors.dark.text,
-            },
-            headerTintColor: Colors.dark.text,
-            headerShadowVisible: false,
-            animation: "slide_from_bottom",
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: Colors.dark.background },
+            animation: "fade",
           }}
-        />
-        <Stack.Screen
-          name="add-custom"
-          options={{
-            presentation: "modal",
-            headerShown: true,
-            headerTitle: "เพิ่มรายการ",
-            headerStyle: { backgroundColor: Colors.dark.background },
-            headerTitleStyle: {
-              fontFamily: FontFamily.thaiSemiBold,
-              fontSize: FontSize.lg,
-              color: Colors.dark.text,
-            },
-            headerTintColor: Colors.dark.text,
-            headerShadowVisible: false,
-            animation: "slide_from_bottom",
-          }}
-        />
-      </Stack>
+        >
+          <Stack.Screen name="lock" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="setup-pin" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+          <Stack.Screen
+            name="detail"
+            options={{
+              presentation: "modal",
+              headerShown: true,
+              headerTitle: "รายละเอียด",
+              headerStyle: { backgroundColor: Colors.dark.background },
+              headerTitleStyle: {
+                fontFamily: FontFamily.thaiSemiBold,
+                fontSize: FontSize.lg,
+                color: Colors.dark.text,
+              },
+              headerTintColor: Colors.dark.text,
+              headerShadowVisible: false,
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen
+            name="add-custom"
+            options={{
+              presentation: "modal",
+              headerShown: true,
+              headerTitle: "เพิ่มรายการ",
+              headerStyle: { backgroundColor: Colors.dark.background },
+              headerTitleStyle: {
+                fontFamily: FontFamily.thaiSemiBold,
+                fontSize: FontSize.lg,
+                color: Colors.dark.text,
+              },
+              headerTintColor: Colors.dark.text,
+              headerShadowVisible: false,
+              animation: "slide_from_bottom",
+            }}
+          />
+        </Stack>
         <StatusBar style="light" />
         <PopupProvider />
       </GestureHandlerRootView>

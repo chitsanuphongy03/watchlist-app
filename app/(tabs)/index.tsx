@@ -3,28 +3,29 @@ import { NextUpCard } from "@/components/next-up-card";
 import { WatchlistCardSkeleton } from "@/components/skeleton";
 import { TypeFilter } from "@/components/type-filter";
 import { WatchlistCard } from "@/components/watchlist-card";
-import { Accent, Colors, FontFamily, FontSize, Spacing } from "@/constants/theme";
+import {
+    Accent,
+    Colors,
+    FontFamily,
+    FontSize,
+    Spacing,
+} from "@/constants/theme";
+import { useUIStore } from "@/stores/ui-store";
 import { useWatchlistStore } from "@/stores/watchlist-store";
 import type { WatchlistItem } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
-import {
-  Animated,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, RefreshControl, StyleSheet, Text, View } from "react-native";
 import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
+    RenderItemParams,
+    ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -37,7 +38,7 @@ function SwipeableCard({
   onMoveUp,
   onMoveDown,
   onMarkWatched,
-  onDelete,
+  onConfirmDelete,
   drag,
   isActive,
 }: {
@@ -48,7 +49,7 @@ function SwipeableCard({
   onMoveUp: () => void;
   onMoveDown: () => void;
   onMarkWatched: () => void;
-  onDelete: () => void;
+  onConfirmDelete: () => void;
   drag: () => void;
   isActive: boolean;
 }) {
@@ -177,7 +178,7 @@ function SwipeableCard({
             if (direction === "left") {
               animateExit("watched", onMarkWatched);
             } else {
-              animateExit("delete", onDelete);
+              onConfirmDelete();
             }
           }}
           leftThreshold={100}
@@ -263,28 +264,31 @@ function WatchlistSkeleton() {
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const showAlert = useUIStore(useCallback((s) => s.showAlert, []));
 
   // Use individual selectors to prevent unnecessary re-renders
   const items = useWatchlistStore(useCallback((state) => state.items, []));
   const isLoading = useWatchlistStore(
-    useCallback((state) => state.isLoading, [])
+    useCallback((state) => state.isLoading, []),
   );
   const contentFilter = useWatchlistStore(
-    useCallback((state) => state.contentFilter, [])
+    useCallback((state) => state.contentFilter, []),
   );
   const initialize = useWatchlistStore(
-    useCallback((state) => state.initialize, [])
+    useCallback((state) => state.initialize, []),
   );
   const setContentFilter = useWatchlistStore(
-    useCallback((state) => state.setContentFilter, [])
+    useCallback((state) => state.setContentFilter, []),
   );
   const moveUp = useWatchlistStore(useCallback((state) => state.moveUp, []));
-  const moveDown = useWatchlistStore(useCallback((state) => state.moveDown, []));
+  const moveDown = useWatchlistStore(
+    useCallback((state) => state.moveDown, []),
+  );
   const updateStatus = useWatchlistStore(
-    useCallback((state) => state.updateStatus, [])
+    useCallback((state) => state.updateStatus, []),
   );
   const removeItem = useWatchlistStore(
-    useCallback((state) => state.removeItem, [])
+    useCallback((state) => state.removeItem, []),
   );
   const reorder = useWatchlistStore(useCallback((state) => state.reorder, []));
 
@@ -332,7 +336,20 @@ export default function HomeScreen() {
           onMoveUp={() => moveUp(item.id)}
           onMoveDown={() => moveDown(item.id)}
           onMarkWatched={() => updateStatus(item.id, "watched")}
-          onDelete={() => removeItem(item.id)}
+          onConfirmDelete={() => {
+            showAlert({
+              title: "ลบรายการ",
+              message: `ต้องการลบ "${item.title}" ออกจาก Watchlist หรือไม่?`,
+              buttons: [
+                { text: "ยกเลิก", style: "cancel" },
+                {
+                  text: "ลบ",
+                  style: "destructive",
+                  onPress: () => removeItem(item.id),
+                },
+              ],
+            });
+          }}
           drag={drag}
           isActive={isActive}
         />
@@ -345,6 +362,7 @@ export default function HomeScreen() {
       moveDown,
       updateStatus,
       removeItem,
+      showAlert,
     ],
   );
 
@@ -440,6 +458,14 @@ export default function HomeScreen() {
           filteredItems.length === 0 && styles.listContentEmpty,
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={Accent.primary}
+            colors={[Accent.primary]}
+          />
+        }
       />
     </SafeAreaView>
   );

@@ -1,13 +1,13 @@
+import { PAGINATION, TIMEOUTS } from "@/constants/config";
 import { getSeasonNowAnime, searchAnime } from "@/services/jikan";
 import {
-  getNowPlayingMovies,
-  getOnTheAirSeries,
-  searchMovies,
-  searchSeries,
-  searchTokusatsu,
-  searchAll as tmdbSearchAll,
+    getNowPlayingMovies,
+    getOnTheAirSeries,
+    searchMovies,
+    searchSeries,
+    searchTokusatsu,
+    searchAll as tmdbSearchAll,
 } from "@/services/tmdb";
-import { PAGINATION, TIMEOUTS } from "@/constants/config";
 import type { ContentFilter, SearchResult } from "@/types";
 import { create } from "zustand";
 
@@ -27,7 +27,7 @@ interface SearchState {
 
   discovery: DiscoveryState;
   isDiscoveryLoading: boolean;
-  fetchDiscovery: () => Promise<void>;
+  fetchDiscovery: (forceRefresh?: boolean) => Promise<void>;
 
   setQuery: (query: string) => void;
   setActiveFilter: (filter: ContentFilter) => void;
@@ -49,14 +49,15 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   discovery: { movies: [], series: [], anime: [], tokusatsu: [] },
   isDiscoveryLoading: false,
 
-  fetchDiscovery: async () => {
+  fetchDiscovery: async (forceRefresh = false) => {
     const { discovery } = get();
     const hasData =
-      discovery.movies.length > 0 ||
-      discovery.series.length > 0 ||
-      discovery.anime.length > 0 ||
+      discovery.movies.length > 0 &&
+      discovery.series.length > 0 &&
+      discovery.anime.length > 0 &&
       discovery.tokusatsu.length > 0;
-    if (hasData) return;
+
+    if (!forceRefresh && hasData) return;
 
     set({ isDiscoveryLoading: true });
     try {

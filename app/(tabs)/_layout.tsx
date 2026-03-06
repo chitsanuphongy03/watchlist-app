@@ -1,16 +1,24 @@
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useCallback } from "react";
 
 import { FloatingTabBar } from "@/components/floating-tab-bar";
 
 export default function TabLayout() {
+  const renderTabBar = useCallback(
+    (props: BottomTabBarProps) => <FloatingTabBar {...props} />,
+    [],
+  );
+
+  const renderTabBarBackground = useCallback(() => null, []);
+
   return (
     <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} />}
+      tabBar={renderTabBar}
       screenOptions={{
         headerShown: false,
         tabBarStyle: { display: "none" },
-        tabBarBackground: () => null,
+        tabBarBackground: renderTabBarBackground,
       }}
     >
       <Tabs.Screen
