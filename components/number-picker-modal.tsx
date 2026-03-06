@@ -132,8 +132,9 @@ export function NumberPickerModal({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.container} onStartShouldSetResponder={() => true}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+        <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -157,7 +158,6 @@ export function NumberPickerModal({
                 decelerationRate="fast"
                 onMomentumScrollEnd={handleScrollEnd}
                 onScrollBeginDrag={handleScrollBegin}
-                nestedScrollEnabled
                 contentContainerStyle={{
                   paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
                 }}
@@ -174,7 +174,7 @@ export function NumberPickerModal({
             <Text style={styles.confirmButtonText}>ตกลง</Text>
           </TouchableOpacity>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }

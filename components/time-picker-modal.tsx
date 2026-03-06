@@ -111,7 +111,6 @@ function ScrollPicker({ data, selectedIndex, onSelect }: ScrollPickerProps) {
         decelerationRate="fast"
         onMomentumScrollEnd={handleScrollEnd}
         onScrollBeginDrag={handleScrollBegin}
-        nestedScrollEnabled
         contentContainerStyle={{
           paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
         }}
@@ -158,8 +157,9 @@ export function TimePickerModal({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.container} onStartShouldSetResponder={() => true}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+        <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>ตั้งเวลาเตือน</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -196,7 +196,7 @@ export function TimePickerModal({
             <Text style={styles.confirmButtonText}>ตกลง</Text>
           </TouchableOpacity>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
